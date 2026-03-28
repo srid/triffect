@@ -32,12 +32,8 @@ pc:
 test: build
     #!/usr/bin/env bash
     set -euo pipefail
-    trap 'kill 0' EXIT
     cd tests && {{ nix_shell }} pnpm install && cd ..
-    {{ nix_shell }} pnpm preview &
-    sleep 2
-    TRIFFECT_SERVER="http://localhost:4173" {{ nix_shell }} pnpm --prefix tests test
-    kill %1 2>/dev/null || true
+    TRIFFECT_SERVER="{{ justfile_directory() }}/node_modules/.bin/vite" {{ nix_shell }} pnpm --prefix tests test
 
 # Run e2e tests against dev server
 test-dev:

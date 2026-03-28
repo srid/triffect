@@ -6,3 +6,4 @@ data/
 .direnv/
 result
 reports/
+.logs/
