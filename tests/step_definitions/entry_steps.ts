@@ -19,7 +19,7 @@ When(
 );
 
 Then("a selection marker should appear", async function (this: TriggityWorld) {
-  const marker = this.page.locator("svg circle[r='12']");
+  const marker = this.page.locator("svg circle[r='12'][fill='white']");
   await marker.waitFor({ state: "visible", timeout: 3000 });
 });
 
