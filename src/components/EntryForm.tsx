@@ -1,7 +1,7 @@
 import { type Component, createSignal } from "solid-js";
 import { ulid } from "ulid";
 import { client } from "../lib/triplit";
-import type { Barycentric } from "../lib/coords";
+import { barycentricToColor, type Barycentric } from "../lib/coords";
 
 interface Props {
   coords: Barycentric;
@@ -36,7 +36,8 @@ const EntryForm: Component<Props> = (props) => {
       <button
         type="submit"
         disabled={saving()}
-        class="bg-pink-500 text-white rounded px-4 py-2 text-sm font-medium hover:bg-pink-600 disabled:opacity-50 transition-colors"
+        class="text-white rounded px-4 py-2 text-sm font-medium disabled:opacity-50 transition-colors"
+        style={{ "background-color": barycentricToColor(props.coords) }}
       >
         {saving() ? "Saving..." : "Log"}
       </button>
