@@ -156,7 +156,7 @@ const Triangle: Component<Props> = (props) => {
           class="fill-green-400 font-medium"
           font-size="22"
         >
-          Naivete
+          Sensuous
         </text>
         <text
           x={v().bad.x}
