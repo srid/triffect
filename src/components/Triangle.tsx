@@ -165,7 +165,7 @@ const Triangle: Component<Props> = (props) => {
           class="fill-red-400 font-medium"
           font-size="22"
         >
-          Bad
+          'Bad'
         </text>
         <text
           x={v().good.x}
@@ -174,7 +174,7 @@ const Triangle: Component<Props> = (props) => {
           class="fill-pink-400 font-medium"
           font-size="22"
         >
-          Good
+          'Good'
         </text>
 
         {hovered() && (
