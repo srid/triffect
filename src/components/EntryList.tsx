@@ -8,7 +8,7 @@ const EntryList: Component = () => {
   const { results, fetchingLocal } = useQuery(client, query);
 
   return (
-    <div class="w-full max-w-xs">
+    <div class="w-full max-w-xs px-1">
       <h2 class="text-sm font-medium text-gray-400 mb-2">Recent</h2>
       <Show
         when={!fetchingLocal()}

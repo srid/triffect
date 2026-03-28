@@ -8,8 +8,9 @@ import {
   type Point,
 } from "../lib/coords";
 
-const SIZE = 320;
-const PADDING = 24;
+// Internal canvas resolution (2x for crisp edges on retina)
+const RES = 640;
+const PADDING = 48;
 
 // Vertex colors: Naivete = green, Bad = dark crimson, Good = hot pink/magenta
 const NAIVETE_COLOR = [34, 197, 94] as const;
@@ -21,9 +22,23 @@ interface Props {
   selected?: Barycentric;
 }
 
+/** Distance from point to line segment. Used for anti-aliased edges. */
+function distToEdge(p: Point, a: Point, b: Point): number {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const len2 = dx * dx + dy * dy;
+  const t = Math.max(
+    0,
+    Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2),
+  );
+  const px = a.x + t * dx - p.x;
+  const py = a.y + t * dy - p.y;
+  return Math.sqrt(px * px + py * py);
+}
+
 const Triangle: Component<Props> = (props) => {
   let canvasRef!: HTMLCanvasElement;
-  const verts = createMemo(() => triangleVertices(SIZE, PADDING));
+  const verts = createMemo(() => triangleVertices(RES, PADDING));
 
   const [hovered, setHovered] = createSignal<Point | null>(null);
 
@@ -35,15 +50,15 @@ const Triangle: Component<Props> = (props) => {
   onMount(() => {
     const ctx = canvasRef.getContext("2d")!;
     const v = verts();
-    const imageData = ctx.createImageData(SIZE, SIZE);
+    const imageData = ctx.createImageData(RES, RES);
     const data = imageData.data;
 
-    for (let y = 0; y < SIZE; y++) {
-      for (let x = 0; x < SIZE; x++) {
+    for (let y = 0; y < RES; y++) {
+      for (let x = 0; x < RES; x++) {
         const p = { x, y };
         if (isInsideTriangle(p, v)) {
           const b = pixelToBarycentric(p, v);
-          const idx = (y * SIZE + x) * 4;
+          const idx = (y * RES + x) * 4;
           data[idx] = Math.round(
             b.naivete * NAIVETE_COLOR[0] +
               b.bad * BAD_COLOR[0] +
@@ -59,22 +74,18 @@ const Triangle: Component<Props> = (props) => {
               b.bad * BAD_COLOR[2] +
               b.good * GOOD_COLOR[2],
           );
-          data[idx + 3] = 255;
+          // Anti-alias: fade alpha near edges
+          const d = Math.min(
+            distToEdge(p, v.naivete, v.bad),
+            distToEdge(p, v.bad, v.good),
+            distToEdge(p, v.good, v.naivete),
+          );
+          data[idx + 3] = d < 1.5 ? Math.round((d / 1.5) * 255) : 255;
         }
       }
     }
 
     ctx.putImageData(imageData, 0, 0);
-
-    // Draw border
-    ctx.beginPath();
-    ctx.moveTo(v.naivete.x, v.naivete.y);
-    ctx.lineTo(v.bad.x, v.bad.y);
-    ctx.lineTo(v.good.x, v.good.y);
-    ctx.closePath();
-    ctx.strokeStyle = "rgba(0,0,0,0.2)";
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
   });
 
   function getPoint(e: MouseEvent | TouchEvent): Point {
@@ -83,8 +94,8 @@ const Triangle: Component<Props> = (props) => {
     const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
     const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
     return {
-      x: ((clientX - rect.left) / rect.width) * SIZE,
-      y: ((clientY - rect.top) / rect.height) * SIZE,
+      x: ((clientX - rect.left) / rect.width) * RES,
+      y: ((clientY - rect.top) / rect.height) * RES,
     };
   }
 
@@ -107,14 +118,11 @@ const Triangle: Component<Props> = (props) => {
   const v = () => verts();
 
   return (
-    <div
-      class="relative cursor-crosshair touch-none select-none"
-      style={{ width: `${SIZE}px`, height: `${SIZE}px` }}
-    >
+    <div class="relative cursor-crosshair touch-none select-none w-full max-w-xs aspect-square">
       <canvas
         ref={canvasRef}
-        width={SIZE}
-        height={SIZE}
+        width={RES}
+        height={RES}
         class="absolute inset-0 w-full h-full"
         onClick={handleClick}
         onTouchStart={handleClick}
@@ -123,32 +131,33 @@ const Triangle: Component<Props> = (props) => {
       />
       {/* Labels and markers as SVG overlay */}
       <svg
-        width={SIZE}
-        height={SIZE}
-        viewBox={`0 0 ${SIZE} ${SIZE}`}
-        class="absolute inset-0 pointer-events-none"
+        viewBox={`0 0 ${RES} ${RES}`}
+        class="absolute inset-0 w-full h-full pointer-events-none"
       >
         <text
           x={v().naivete.x}
-          y={v().naivete.y - 8}
+          y={v().naivete.y - 14}
           text-anchor="middle"
-          class="text-xs fill-green-400 font-medium"
+          class="fill-green-400 font-medium"
+          font-size="22"
         >
           Naivete
         </text>
         <text
-          x={v().bad.x - 8}
-          y={v().bad.y + 16}
+          x={v().bad.x - 14}
+          y={v().bad.y + 30}
           text-anchor="end"
-          class="text-xs fill-red-400 font-medium"
+          class="fill-red-400 font-medium"
+          font-size="22"
         >
           Bad
         </text>
         <text
-          x={v().good.x + 8}
-          y={v().good.y + 16}
+          x={v().good.x + 14}
+          y={v().good.y + 30}
           text-anchor="start"
-          class="text-xs fill-pink-400 font-medium"
+          class="fill-pink-400 font-medium"
+          font-size="22"
         >
           Good
         </text>
@@ -157,10 +166,10 @@ const Triangle: Component<Props> = (props) => {
           <circle
             cx={hovered()!.x}
             cy={hovered()!.y}
-            r="4"
+            r="8"
             fill="white"
             stroke="rgba(0,0,0,0.3)"
-            stroke-width="1"
+            stroke-width="2"
             opacity="0.7"
           />
         )}
@@ -169,10 +178,10 @@ const Triangle: Component<Props> = (props) => {
           <circle
             cx={selectedPixel()!.x}
             cy={selectedPixel()!.y}
-            r="6"
+            r="12"
             fill="white"
             stroke="rgba(0,0,0,0.5)"
-            stroke-width="2"
+            stroke-width="3"
           />
         )}
       </svg>

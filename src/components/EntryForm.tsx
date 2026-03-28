@@ -32,7 +32,10 @@ const EntryForm: Component<Props> = (props) => {
   }
 
   return (
-    <form onSubmit={handleSubmit} class="flex flex-col gap-2 w-full max-w-xs">
+    <form
+      onSubmit={handleSubmit}
+      class="flex flex-col gap-2 w-full max-w-xs px-1"
+    >
       <textarea
         value={note()}
         onInput={(e) => setNote(e.currentTarget.value)}
