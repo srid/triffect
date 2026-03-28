@@ -14,8 +14,8 @@ export default defineConfig({
         name: "Triffect",
         short_name: "Triffect",
         description: "Triangular affect journaling",
-        theme_color: "#ec4899",
-        background_color: "#ffffff",
+        theme_color: "#030712",
+        background_color: "#030712",
         display: "standalone",
         icons: [
           {

@@ -20,7 +20,7 @@ export class TriggityWorld extends World {
 
   /** Click inside the triangle at a relative position (0-1 for x and y within the SVG). */
   async clickTriangle(relX: number, relY: number) {
-    const svg = this.page.locator("svg.cursor-crosshair");
+    const svg = this.page.locator("div.cursor-crosshair");
     const box = await svg.boundingBox();
     if (!box) throw new Error("Triangle SVG not found");
     await svg.click({

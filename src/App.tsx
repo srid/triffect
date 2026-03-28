@@ -12,8 +12,8 @@ const App: Component = () => {
   }
 
   return (
-    <div class="min-h-screen bg-white flex flex-col items-center px-4 py-8 gap-6">
-      <h1 class="text-lg font-semibold text-gray-800">Triffect</h1>
+    <div class="min-h-screen bg-gray-950 flex flex-col items-center px-4 py-8 gap-6">
+      <h1 class="text-lg font-semibold text-gray-200">Triffect</h1>
 
       <Triangle onSelect={setSelected} selected={selected() ?? undefined} />
 

@@ -18,7 +18,7 @@ Then(
 );
 
 Then("the triangle should be visible", async function (this: TriggityWorld) {
-  const svg = this.page.locator("svg.cursor-crosshair");
+  const svg = this.page.locator("div.cursor-crosshair");
   await svg.waitFor({ state: "visible", timeout: 5000 });
 });
 

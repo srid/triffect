@@ -11,10 +11,10 @@ import {
 const SIZE = 320;
 const PADDING = 24;
 
-// Vertex colors: Naivete = green, Bad = red, Good = pink
+// Vertex colors: Naivete = green, Bad = dark crimson, Good = hot pink/magenta
 const NAIVETE_COLOR = [34, 197, 94] as const;
-const BAD_COLOR = [220, 38, 38] as const;
-const GOOD_COLOR = [236, 72, 153] as const;
+const BAD_COLOR = [153, 27, 27] as const;
+const GOOD_COLOR = [255, 0, 150] as const;
 
 interface Props {
   onSelect: (coords: Barycentric) => void;
@@ -132,7 +132,7 @@ const Triangle: Component<Props> = (props) => {
           x={v().naivete.x}
           y={v().naivete.y - 8}
           text-anchor="middle"
-          class="text-xs fill-green-600 font-medium"
+          class="text-xs fill-green-400 font-medium"
         >
           Naivete
         </text>
@@ -140,7 +140,7 @@ const Triangle: Component<Props> = (props) => {
           x={v().bad.x - 8}
           y={v().bad.y + 16}
           text-anchor="end"
-          class="text-xs fill-red-600 font-medium"
+          class="text-xs fill-red-400 font-medium"
         >
           Bad
         </text>
@@ -148,7 +148,7 @@ const Triangle: Component<Props> = (props) => {
           x={v().good.x + 8}
           y={v().good.y + 16}
           text-anchor="start"
-          class="text-xs fill-pink-500 font-medium"
+          class="text-xs fill-pink-400 font-medium"
         >
           Good
         </text>

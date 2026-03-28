@@ -9,7 +9,7 @@ const EntryList: Component = () => {
 
   return (
     <div class="w-full max-w-xs">
-      <h2 class="text-sm font-medium text-gray-500 mb-2">Recent</h2>
+      <h2 class="text-sm font-medium text-gray-400 mb-2">Recent</h2>
       <Show
         when={!fetchingLocal()}
         fallback={<p class="text-xs text-gray-400">Loading...</p>}
@@ -28,7 +28,7 @@ const EntryList: Component = () => {
                 };
                 const color = barycentricToColor(b);
                 return (
-                  <li class="flex items-center gap-2 py-1.5 px-2 rounded bg-gray-50">
+                  <li class="flex items-center gap-2 py-1.5 px-2 rounded bg-gray-900">
                     <span
                       class="w-3 h-3 rounded-full shrink-0"
                       style={{ "background-color": color }}
@@ -42,7 +42,7 @@ const EntryList: Component = () => {
                       })}
                     </span>
                     <Show when={entry.note}>
-                      <span class="text-xs text-gray-700 truncate">
+                      <span class="text-xs text-gray-300 truncate">
                         {entry.note}
                       </span>
                     </Show>
