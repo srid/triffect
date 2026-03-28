@@ -6,6 +6,10 @@ The Triplit schema field names (`good`, `bad`, `naivete`) are stored in IndexedD
 
 Display labels (e.g. "Sensuous" for the `naivete` field) can change freely since they're UI-only.
 
+## Git
+
+Each commit represents one logical change. Don't bundle unrelated changes.
+
 ## Target Device
 
 Primary use is on **Android phone as an installed PWA**. All UI work must be mobile-first — test at narrow widths, ensure touch targets are large enough, and avoid hover-dependent interactions.
