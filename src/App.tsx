@@ -61,17 +61,18 @@ const App: Component = () => {
 
       <footer class="text-center mt-3 max-w-xs px-1 space-y-1">
         <p class="text-[11px] text-gray-600 leading-snug">
-          <b class="text-green-600">Sensuous</b> — the felicitous, innocuous,
-          native feelings of being alive. <b class="text-red-500">'Bad'</b> —
-          malice and sorrow. <b class="text-pink-500">'Good'</b> — love and
-          compassion.{" "}
+          <b class="text-green-600">Sensuous</b> — felicitous and innocuous
+          feelings (happy, carefree, harmless, congenial).{" "}
+          <b class="text-red-500">'Bad'</b> — hostile and invidious passions
+          (malicious, sorrowful). <b class="text-pink-500">'Good'</b> —
+          affectionate and desirable passions (loving, compassionate).{" "}
           <a
-            href="http://actualfreedom.com.au/richard/selectedcorrespondence/sc-feelings2.htm"
+            href="https://actualfreedom.com.au/sundry/frequentquestions/FAQ63a.htm"
             class="underline hover:text-gray-400"
             target="_blank"
             rel="noopener"
           >
-            actualfreedom.com.au
+            source
           </a>
         </p>
         <a
