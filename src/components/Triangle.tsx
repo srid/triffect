@@ -22,6 +22,7 @@ const GOOD_COLOR = [255, 0, 150] as const;
 interface Props {
   onSelect: (coords: Barycentric) => void;
   selected?: Barycentric;
+  glowColor?: string;
 }
 
 /** Distance from point to line segment. Used for anti-aliased edges. */
@@ -135,6 +136,18 @@ const Triangle: Component<Props> = (props) => {
       class="relative cursor-crosshair touch-none select-none w-full max-w-xs"
       style={{ "aspect-ratio": `${W} / ${Math.ceil(H)}` }}
     >
+      {/* Ambient glow behind triangle */}
+      {props.glowColor && (
+        <div
+          class="absolute inset-0 rounded-full"
+          style={{
+            background: props.glowColor,
+            filter: "blur(60px)",
+            opacity: "0.35",
+            animation: "glow-pulse 4s ease-in-out infinite",
+          }}
+        />
+      )}
       <canvas
         ref={canvasRef}
         width={W}
@@ -148,6 +161,7 @@ const Triangle: Component<Props> = (props) => {
       <svg
         viewBox={`0 0 ${W} ${Math.ceil(H)}`}
         class="absolute inset-0 w-full h-full pointer-events-none"
+        style="overflow: visible"
       >
         <text
           x={v().naivete.x}
@@ -190,14 +204,31 @@ const Triangle: Component<Props> = (props) => {
         )}
 
         {selectedPixel() && (
-          <circle
-            cx={selectedPixel()!.x}
-            cy={selectedPixel()!.y}
-            r="12"
-            fill="white"
-            stroke="rgba(0,0,0,0.5)"
-            stroke-width="3"
-          />
+          <>
+            {/* Expanding pulse ring */}
+            <circle
+              cx={selectedPixel()!.x}
+              cy={selectedPixel()!.y}
+              r="12"
+              fill="none"
+              stroke="white"
+              stroke-width="2"
+              style={{ animation: "pulse-ring 0.6s ease-out forwards" }}
+            />
+            {/* Main marker with scale-in */}
+            <circle
+              cx={selectedPixel()!.x}
+              cy={selectedPixel()!.y}
+              r="12"
+              fill="white"
+              stroke="rgba(0,0,0,0.5)"
+              stroke-width="3"
+              style={{
+                "transform-origin": `${selectedPixel()!.x}px ${selectedPixel()!.y}px`,
+                animation: "marker-in 0.3s ease-out forwards",
+              }}
+            />
+          </>
         )}
       </svg>
     </div>

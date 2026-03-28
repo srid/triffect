@@ -78,9 +78,27 @@ const Calendar: Component = () => {
 
   const isToday = (key: string) => key === startOfDay(new Date());
 
+  // Streak: consecutive days with ≥1 entry, counting back from today
+  const streak = createMemo(() => {
+    const map = dayMap();
+    let count = 0;
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    while (map.has(startOfDay(d))) {
+      count++;
+      d.setDate(d.getDate() - 1);
+    }
+    return count;
+  });
+
   return (
     <div class="w-full max-w-xs px-1">
-      <h2 class="text-sm font-medium text-gray-400 mb-1">Last 4 weeks</h2>
+      <div class="flex items-baseline justify-between mb-1">
+        <h2 class="text-sm font-medium text-gray-400">Last 4 weeks</h2>
+        {streak() > 0 && (
+          <span class="text-xs text-amber-500">{streak()} day streak</span>
+        )}
+      </div>
       <div
         class="grid gap-[3px]"
         style={{ "grid-template-columns": "repeat(7, 1fr)" }}
