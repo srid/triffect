@@ -1,4 +1,4 @@
-import { Component, createSignal } from "solid-js";
+import { type Component, createSignal } from "solid-js";
 import { ulid } from "ulid";
 import { client } from "../lib/triplit";
 import type { Barycentric } from "../lib/coords";
@@ -9,7 +9,6 @@ interface Props {
 }
 
 const EntryForm: Component<Props> = (props) => {
-  const [note, setNote] = createSignal("");
   const [saving, setSaving] = createSignal(false);
 
   async function handleSubmit(e: Event) {
@@ -21,10 +20,8 @@ const EntryForm: Component<Props> = (props) => {
         good: props.coords.good,
         bad: props.coords.bad,
         naivete: props.coords.naivete,
-        note: note() || undefined,
         created_at: new Date(),
       });
-      setNote("");
       props.onSaved();
     } finally {
       setSaving(false);
@@ -36,13 +33,6 @@ const EntryForm: Component<Props> = (props) => {
       onSubmit={handleSubmit}
       class="flex flex-col gap-2 w-full max-w-xs px-1"
     >
-      <input
-        type="text"
-        value={note()}
-        onInput={(e) => setNote(e.currentTarget.value)}
-        placeholder="What's happening? (optional)"
-        class="border border-gray-700 bg-gray-900 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 placeholder-gray-500"
-      />
       <button
         type="submit"
         disabled={saving()}

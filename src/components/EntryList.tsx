@@ -1,4 +1,4 @@
-import { Component, For, Show } from "solid-js";
+import { type Component, For, Show } from "solid-js";
 import { useQuery } from "@triplit/solid";
 import { client } from "../lib/triplit";
 import { barycentricToColor, type Barycentric } from "../lib/coords";
@@ -53,11 +53,6 @@ const EntryList: Component = () => {
                         },
                       )}
                     </span>
-                    <Show when={entry.note}>
-                      <span class="text-xs text-gray-300 truncate">
-                        {entry.note}
-                      </span>
-                    </Show>
                   </li>
                 );
               }}
