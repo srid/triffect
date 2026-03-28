@@ -1,4 +1,4 @@
-import 'ci/mod.just'
+mod ci 'ci/mod.just'
 
 # Install dependencies
 install:
