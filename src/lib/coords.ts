@@ -76,10 +76,10 @@ export function barycentricToPixel(b: Barycentric, v: TriangleVertices): Point {
 
 /** Interpolate color from barycentric coordinates. */
 export function barycentricToColor(b: Barycentric): string {
-  // Bad = dark crimson (153,27,27), Good = hot pink (255,0,150), Naivete = green (34,197,94)
-  const r = Math.round(b.bad * 153 + b.good * 255 + b.naivete * 34);
-  const g = Math.round(b.bad * 27 + b.good * 0 + b.naivete * 197);
-  const bl = Math.round(b.bad * 27 + b.good * 150 + b.naivete * 94);
+  // Bad = bright red (220,60,60), Good = rose pink (250,50,180), Naivete = green (34,197,94)
+  const r = Math.round(b.bad * 220 + b.good * 250 + b.naivete * 34);
+  const g = Math.round(b.bad * 60 + b.good * 50 + b.naivete * 197);
+  const bl = Math.round(b.bad * 60 + b.good * 180 + b.naivete * 94);
   return `rgb(${r}, ${g}, ${bl})`;
 }
 

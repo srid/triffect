@@ -16,8 +16,8 @@ const PADDING_BOTTOM = 40; // space for bottom labels
 
 // Vertex colors: Naivete = green, Bad = dark crimson, Good = hot pink/magenta
 const NAIVETE_COLOR = [34, 197, 94] as const;
-const BAD_COLOR = [153, 27, 27] as const;
-const GOOD_COLOR = [255, 0, 150] as const;
+const BAD_COLOR = [220, 60, 60] as const;
+const GOOD_COLOR = [250, 50, 180] as const;
 
 interface Props {
   onSelect: (coords: Barycentric) => void;
