@@ -1,38 +1,21 @@
 /**
- * Cucumber hooks — browser lifecycle + server provisioning.
+ * Cucumber hooks — browser lifecycle + app health check.
  *
- * TRIFFECT_SERVER controls how the app is provided:
- *  - URL (http://...) → reuse an existing server (e.g. vite preview)
- *  - file path        → each worker serves the built dist on a random port
- *
- * Random ports (via get-port) let parallel runs across worktrees
- * coexist without port collisions.
+ * TRIFFECT_SERVER must be a URL pointing to a running app instance.
+ * The server is started externally (by justfile or manually).
  */
 
 import { Before, After, BeforeAll, AfterAll, Status } from "@cucumber/cucumber";
 import { chromium } from "playwright";
 import type { Browser } from "playwright";
-import getPort from "get-port";
 import { TriggityWorld } from "./world.ts";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import type { ChildProcess } from "node:child_process";
-import { spawn } from "node:child_process";
 
 const workerId = parseInt(process.env.CUCUMBER_WORKER_ID || "0");
 
 let baseUrl: string;
 let browser: Browser;
-let serverProcess: ChildProcess | undefined;
-
-/** Kill the server child on any exit path (crash, SIGINT, SIGTERM). */
-function killServer() {
-  if (serverProcess) {
-    serverProcess.kill("SIGTERM");
-    serverProcess = undefined;
-  }
-}
-process.on("exit", killServer);
 
 const ciArgs = [
   "--no-sandbox",
@@ -59,25 +42,7 @@ async function waitForHealth(url: string, timeoutMs: number): Promise<void> {
 }
 
 BeforeAll(async function () {
-  const triffectServer = process.env.TRIFFECT_SERVER;
-  if (!triffectServer)
-    throw new Error("TRIFFECT_SERVER must be a URL or path to vite binary");
-
-  if (triffectServer.startsWith("http")) {
-    baseUrl = triffectServer;
-  } else {
-    // Spawn vite preview on a random port
-    const port = await getPort();
-    baseUrl = `http://localhost:${port}`;
-    console.log(`[worker:${workerId}] Starting preview on port ${port}...`);
-    serverProcess = spawn(triffectServer, ["preview", "--port", String(port)], {
-      stdio: "pipe",
-    });
-    serverProcess.stderr?.on("data", (data: Buffer) => {
-      process.stderr.write(`[server:${workerId}] ${data}`);
-    });
-  }
-
+  baseUrl = process.env.TRIFFECT_SERVER || "http://localhost:5173";
   await waitForHealth(baseUrl, 30_000);
   console.log(`[worker:${workerId}] App is healthy at ${baseUrl}`);
 
@@ -90,7 +55,6 @@ BeforeAll(async function () {
 
 AfterAll(async function () {
   if (browser) await browser.close();
-  killServer();
 });
 
 Before(async function (this: TriggityWorld) {
