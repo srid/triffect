@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.triplit/
+data/
+*.log
+.direnv/
+result
+reports/
