@@ -12,7 +12,7 @@ const App: Component = () => {
   }
 
   return (
-    <div class="min-h-screen bg-gray-950 flex flex-col items-center px-3 py-4 gap-3">
+    <div class="min-h-screen bg-gray-950 flex flex-col items-center px-3 py-3 gap-2">
       <h1 class="text-base font-semibold text-gray-200">Triffect</h1>
 
       <Triangle onSelect={setSelected} selected={selected() ?? undefined} />
