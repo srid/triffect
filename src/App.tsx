@@ -2,6 +2,7 @@ import { Component, createSignal, Show } from "solid-js";
 import Triangle from "./components/Triangle";
 import EntryForm from "./components/EntryForm";
 import EntryList from "./components/EntryList";
+import Calendar from "./components/Calendar";
 import type { Barycentric } from "./lib/coords";
 
 const App: Component = () => {
@@ -22,6 +23,8 @@ const App: Component = () => {
       </Show>
 
       <EntryList />
+
+      <Calendar />
     </div>
   );
 };
