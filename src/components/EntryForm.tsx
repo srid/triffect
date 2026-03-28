@@ -20,7 +20,7 @@ const EntryForm: Component<Props> = (props) => {
         id: ulid(),
         good: props.coords.good,
         bad: props.coords.bad,
-        felicitous: props.coords.felicitous,
+        naivete: props.coords.naivete,
         note: note() || undefined,
         created_at: new Date(),
       });

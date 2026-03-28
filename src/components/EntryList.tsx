@@ -5,13 +5,13 @@ import { barycentricToColor, type Barycentric } from "../lib/coords";
 
 const EntryList: Component = () => {
   const query = client.query("entries").Order("created_at", "DESC").Limit(50);
-  const { results, fetching } = useQuery(client, query);
+  const { results, fetchingLocal } = useQuery(client, query);
 
   return (
     <div class="w-full max-w-xs">
       <h2 class="text-sm font-medium text-gray-500 mb-2">Recent</h2>
       <Show
-        when={!fetching()}
+        when={!fetchingLocal()}
         fallback={<p class="text-xs text-gray-400">Loading...</p>}
       >
         <Show
@@ -24,7 +24,7 @@ const EntryList: Component = () => {
                 const b: Barycentric = {
                   good: entry.good,
                   bad: entry.bad,
-                  felicitous: entry.felicitous,
+                  naivete: entry.naivete,
                 };
                 const color = barycentricToColor(b);
                 return (

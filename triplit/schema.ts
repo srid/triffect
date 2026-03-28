@@ -6,7 +6,7 @@ export const schema = {
       id: S.Id(),
       good: S.Number(),
       bad: S.Number(),
-      felicitous: S.Number(),
+      naivete: S.Number(),
       note: S.Optional(S.String()),
       created_at: S.Date(),
     }),
