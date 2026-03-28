@@ -36,17 +36,12 @@ const EntryForm: Component<Props> = (props) => {
       onSubmit={handleSubmit}
       class="flex flex-col gap-2 w-full max-w-xs px-1"
     >
-      <textarea
+      <input
+        type="text"
         value={note()}
         onInput={(e) => setNote(e.currentTarget.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            e.currentTarget.form?.requestSubmit();
-          }
-        }}
         placeholder="What's happening? (optional)"
-        class="border border-gray-700 bg-gray-900 text-gray-200 rounded px-3 py-2 text-sm resize-none h-16 focus:outline-none focus:ring-2 focus:ring-pink-500 placeholder-gray-500"
+        class="border border-gray-700 bg-gray-900 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 placeholder-gray-500"
       />
       <button
         type="submit"
