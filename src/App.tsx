@@ -64,8 +64,8 @@ const App: Component = () => {
           <b class="text-green-600">Sensuous</b> — felicitous and innocuous
           feelings (happy, carefree, harmless, congenial).{" "}
           <b class="text-red-500">'Bad'</b> — hostile and invidious passions
-          (malicious, sorrowful). <b class="text-pink-500">'Good'</b> —
-          affectionate and desirable passions (loving, compassionate).{" "}
+          (hateful, fearful). <b class="text-pink-500">'Good'</b> — affectionate
+          and desirable passions (loving, trusting).{" "}
           <a
             href="https://actualfreedom.com.au/sundry/frequentquestions/FAQ63a.htm"
             class="underline hover:text-gray-400"
