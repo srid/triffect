@@ -28,19 +28,20 @@ typecheck: install
 pc:
     pre-commit run --all-files
 
-# Run e2e tests (full build + test)
-test: build
-    #!/usr/bin/env bash
-    set -euo pipefail
-    trap 'kill 0' EXIT
-    cd tests && {{ nix_shell }} pnpm install && cd ..
-    {{ nix_shell }} pnpm preview --port 4173 &
-    sleep 2
-    TRIFFECT_SERVER="http://localhost:4173" {{ nix_shell }} pnpm --prefix tests test
+# Run e2e tests (full build + test, single nix-shell for speed)
+test:
+    {{ nix_shell }} bash -c '\
+      set -euo pipefail; \
+      trap "kill 0" EXIT; \
+      pnpm install; \
+      pnpm build; \
+      cd tests && pnpm install && cd ..; \
+      pnpm preview --port 4173 & \
+      sleep 2; \
+      TRIFFECT_SERVER="http://localhost:4173" pnpm --prefix tests test'
 
 # Run e2e tests against dev server
 test-dev:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    cd tests && {{ nix_shell }} pnpm install && cd ..
-    TRIFFECT_SERVER="http://localhost:5173" {{ nix_shell }} pnpm --prefix tests test
+    {{ nix_shell }} bash -c '\
+      cd tests && pnpm install && cd ..; \
+      TRIFFECT_SERVER="http://localhost:5173" pnpm --prefix tests test'
