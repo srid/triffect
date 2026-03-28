@@ -8,9 +8,11 @@ import {
   type Point,
 } from "../lib/coords";
 
-// Internal canvas resolution (2x for crisp edges on retina)
-const RES = 640;
-const PADDING = 48;
+// Canvas dimensions: wide enough for labels, tall enough for triangle + labels
+const W = 640;
+const PADDING_X = 60;
+const PADDING_TOP = 50; // space for top label
+const PADDING_BOTTOM = 40; // space for bottom labels
 
 // Vertex colors: Naivete = green, Bad = dark crimson, Good = hot pink/magenta
 const NAIVETE_COLOR = [34, 197, 94] as const;
@@ -36,9 +38,20 @@ function distToEdge(p: Point, a: Point, b: Point): number {
   return Math.sqrt(px * px + py * py);
 }
 
+// Compute triangle size from canvas width
+const triWidth = W - PADDING_X * 2;
+const triHeight = triWidth * (Math.sqrt(3) / 2);
+const H = PADDING_TOP + triHeight + PADDING_BOTTOM;
+
 const Triangle: Component<Props> = (props) => {
   let canvasRef!: HTMLCanvasElement;
-  const verts = createMemo(() => triangleVertices(RES, PADDING));
+
+  // Vertices positioned within the canvas
+  const verts = createMemo(() => ({
+    naivete: { x: W / 2, y: PADDING_TOP },
+    bad: { x: PADDING_X, y: PADDING_TOP + triHeight },
+    good: { x: W - PADDING_X, y: PADDING_TOP + triHeight },
+  }));
 
   const [hovered, setHovered] = createSignal<Point | null>(null);
 
@@ -50,15 +63,16 @@ const Triangle: Component<Props> = (props) => {
   onMount(() => {
     const ctx = canvasRef.getContext("2d")!;
     const v = verts();
-    const imageData = ctx.createImageData(RES, RES);
+    const imageData = ctx.createImageData(W, Math.ceil(H));
     const data = imageData.data;
+    const h = Math.ceil(H);
 
-    for (let y = 0; y < RES; y++) {
-      for (let x = 0; x < RES; x++) {
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < W; x++) {
         const p = { x, y };
         if (isInsideTriangle(p, v)) {
           const b = pixelToBarycentric(p, v);
-          const idx = (y * RES + x) * 4;
+          const idx = (y * W + x) * 4;
           data[idx] = Math.round(
             b.naivete * NAIVETE_COLOR[0] +
               b.bad * BAD_COLOR[0] +
@@ -74,7 +88,6 @@ const Triangle: Component<Props> = (props) => {
               b.bad * BAD_COLOR[2] +
               b.good * GOOD_COLOR[2],
           );
-          // Anti-alias: fade alpha near edges
           const d = Math.min(
             distToEdge(p, v.naivete, v.bad),
             distToEdge(p, v.bad, v.good),
@@ -94,8 +107,8 @@ const Triangle: Component<Props> = (props) => {
     const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
     const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
     return {
-      x: ((clientX - rect.left) / rect.width) * RES,
-      y: ((clientY - rect.top) / rect.height) * RES,
+      x: ((clientX - rect.left) / rect.width) * W,
+      y: ((clientY - rect.top) / rect.height) * H,
     };
   }
 
@@ -118,25 +131,27 @@ const Triangle: Component<Props> = (props) => {
   const v = () => verts();
 
   return (
-    <div class="relative cursor-crosshair touch-none select-none w-full max-w-xs aspect-square">
+    <div
+      class="relative cursor-crosshair touch-none select-none w-full max-w-xs"
+      style={{ "aspect-ratio": `${W} / ${Math.ceil(H)}` }}
+    >
       <canvas
         ref={canvasRef}
-        width={RES}
-        height={RES}
+        width={W}
+        height={Math.ceil(H)}
         class="absolute inset-0 w-full h-full"
         onClick={handleClick}
         onTouchStart={handleClick}
         onMouseMove={handleMove}
         onMouseLeave={() => setHovered(null)}
       />
-      {/* Labels and markers as SVG overlay */}
       <svg
-        viewBox={`0 0 ${RES} ${RES}`}
+        viewBox={`0 0 ${W} ${Math.ceil(H)}`}
         class="absolute inset-0 w-full h-full pointer-events-none"
       >
         <text
           x={v().naivete.x}
-          y={v().naivete.y - 14}
+          y={v().naivete.y - 12}
           text-anchor="middle"
           class="fill-green-400 font-medium"
           font-size="22"
@@ -144,18 +159,18 @@ const Triangle: Component<Props> = (props) => {
           Naivete
         </text>
         <text
-          x={v().bad.x - 14}
-          y={v().bad.y + 30}
-          text-anchor="end"
+          x={v().bad.x}
+          y={v().bad.y + 26}
+          text-anchor="middle"
           class="fill-red-400 font-medium"
           font-size="22"
         >
           Bad
         </text>
         <text
-          x={v().good.x + 14}
-          y={v().good.y + 30}
-          text-anchor="start"
+          x={v().good.x}
+          y={v().good.y + 26}
+          text-anchor="middle"
           class="fill-pink-400 font-medium"
           font-size="22"
         >
