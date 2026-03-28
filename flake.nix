@@ -11,17 +11,21 @@
   outputs = _:
     let
       systems = [ "x86_64-linux" "aarch64-darwin" ];
-      forAllSystems = f: builtins.listToAttrs (
-        map (system: { name = system; value = f system; }) systems
+      eachSystem = f: builtins.listToAttrs (
+        map
+          (system: {
+            name = system;
+            value = f (import ./nix/nixpkgs.nix { inherit system; });
+          })
+          systems
       );
     in
     {
-      devShells = forAllSystems (system:
-        let
-          pkgs = import ./nix/nixpkgs.nix { inherit system; };
-        in
-        {
-          default = import ./shell.nix { inherit pkgs; };
-        });
+      homeManagerModules.default = import ./nix/home/module.nix;
+      packages = eachSystem (pkgs:
+        let all = import ./default.nix { inherit pkgs; };
+        in { inherit (all) default; });
+      devShells = eachSystem (pkgs:
+        { default = import ./shell.nix { inherit pkgs; }; });
     };
 }
