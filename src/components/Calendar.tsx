@@ -53,34 +53,45 @@ const Calendar: Component = () => {
     return map;
   });
 
-  // Generate grid: last 4 weeks, aligned to Monday start
+  // Generate grid: exactly 4 rows (weeks), ending on today's column
   const grid = createMemo(() => {
-    const days: { key: string; date: Date; dayOfMonth: number }[] = [];
     const today = new Date();
-    // Find the Monday of the week containing (today - DAYS + 1)
-    const start = daysAgo(DAYS - 1);
-    const dow = start.getDay();
-    const mondayOffset = dow === 0 ? 6 : dow - 1; // days since Monday
-    start.setDate(start.getDate() - mondayOffset);
-
-    const end = new Date(today);
-    const d = new Date(start);
-    while (d <= end) {
-      days.push({
-        key: startOfDay(d),
-        date: new Date(d),
-        dayOfMonth: d.getDate(),
-      });
-      d.setDate(d.getDate() + 1);
+    today.setHours(0, 0, 0, 0);
+    // Monday = 0, Sunday = 6
+    const todayCol = today.getDay() === 0 ? 6 : today.getDay() - 1;
+    // Go back to fill exactly 4 rows: 3 full weeks + current partial week up to today
+    const totalDays = 3 * 7 + todayCol + 1;
+    const days: { key: string; dayOfMonth: number }[] = [];
+    for (let i = totalDays - 1; i >= 0; i--) {
+      const d = daysAgo(i);
+      days.push({ key: startOfDay(d), dayOfMonth: d.getDate() });
     }
     return days;
   });
 
   const isToday = (key: string) => key === startOfDay(new Date());
 
+  // Streak: consecutive days with ≥1 entry, counting back from today
+  const streak = createMemo(() => {
+    const map = dayMap();
+    let count = 0;
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    while (map.has(startOfDay(d))) {
+      count++;
+      d.setDate(d.getDate() - 1);
+    }
+    return count;
+  });
+
   return (
     <div class="w-full max-w-xs px-1">
-      <h2 class="text-sm font-medium text-gray-400 mb-1">Last 4 weeks</h2>
+      <div class="flex items-baseline justify-between mb-1">
+        <h2 class="text-sm font-medium text-gray-400">Last 4 weeks</h2>
+        {streak() > 0 && (
+          <span class="text-xs text-amber-500">{streak()} day streak</span>
+        )}
+      </div>
       <div
         class="grid gap-[3px]"
         style={{ "grid-template-columns": "repeat(7, 1fr)" }}
