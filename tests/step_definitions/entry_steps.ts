@@ -14,12 +14,12 @@ When("I submit the entry", async function (this: TriggityWorld) {
 When(
   "I type {string} in the note field",
   async function (this: TriggityWorld, text: string) {
-    await this.page.locator("textarea").fill(text);
+    await this.page.locator("input[type='text']").fill(text);
   },
 );
 
 Then("a selection marker should appear", async function (this: TriggityWorld) {
-  const marker = this.page.locator("svg circle[r='6']");
+  const marker = this.page.locator("svg circle[r='12']");
   await marker.waitFor({ state: "visible", timeout: 3000 });
 });
 
