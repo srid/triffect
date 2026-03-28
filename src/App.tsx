@@ -59,14 +59,30 @@ const App: Component = () => {
 
       <Calendar />
 
-      <a
-        href="https://github.com/srid/triffect"
-        class="text-xs text-gray-600 hover:text-gray-400 mt-2"
-        target="_blank"
-        rel="noopener"
-      >
-        source
-      </a>
+      <footer class="text-center mt-3 max-w-xs px-1 space-y-1">
+        <p class="text-[11px] text-gray-600 leading-snug">
+          <b class="text-green-600">Sensuous</b> — the felicitous, innocuous,
+          native feelings of being alive. <b class="text-red-500">'Bad'</b> —
+          malice and sorrow. <b class="text-pink-500">'Good'</b> — love and
+          compassion.{" "}
+          <a
+            href="http://actualfreedom.com.au/richard/selectedcorrespondence/sc-feelings2.htm"
+            class="underline hover:text-gray-400"
+            target="_blank"
+            rel="noopener"
+          >
+            actualfreedom.com.au
+          </a>
+        </p>
+        <a
+          href="https://github.com/srid/triffect"
+          class="text-[11px] text-gray-600 hover:text-gray-400"
+          target="_blank"
+          rel="noopener"
+        >
+          source
+        </a>
+      </footer>
     </div>
   );
 };
