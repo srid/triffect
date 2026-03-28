@@ -7,14 +7,15 @@ install:
     {{ nix_shell }} pnpm install
 
 # Run dev server (vite + triplit)
-dev: install
-    #!/usr/bin/env bash
-    set -euo pipefail
-    trap 'kill 0' EXIT
-    {{ nix_shell }} pnpm triplit dev &
+[parallel]
+dev: _triplit-dev _vite-dev
+
+_triplit-dev: install
+    {{ nix_shell }} pnpm triplit dev
+
+_vite-dev: install
     sleep 1
-    {{ nix_shell }} pnpm dev &
-    wait
+    {{ nix_shell }} pnpm dev
 
 # Build for production
 build: install
@@ -28,20 +29,19 @@ typecheck: install
 pc:
     pre-commit run --all-files
 
-# Run e2e tests (full build + test, single nix-shell for speed)
-test:
-    {{ nix_shell }} bash -c '\
-      set -euo pipefail; \
-      trap "kill 0" EXIT; \
-      pnpm install; \
-      pnpm build; \
-      cd tests && pnpm install && cd ..; \
-      pnpm preview --port 4173 & \
-      sleep 2; \
-      TRIFFECT_SERVER="http://localhost:4173" pnpm --prefix tests test'
+# Run e2e tests (nix build once, each worker spawns the binary)
+test: install
+    #!/usr/bin/env bash
+    set -euo pipefail
+    TRIFFECT_SERVER="$(nix build path:{{ justfile_directory() }} --print-out-paths)/bin/triffect"
+    cd tests
+    {{ nix_shell }} pnpm install
+    TRIFFECT_SERVER="$TRIFFECT_SERVER" {{ nix_shell }} pnpm test
 
 # Run e2e tests against dev server
-test-dev:
-    {{ nix_shell }} bash -c '\
-      cd tests && pnpm install && cd ..; \
-      TRIFFECT_SERVER="http://localhost:5173" pnpm --prefix tests test'
+test-dev: install
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd tests
+    {{ nix_shell }} pnpm install
+    TRIFFECT_SERVER="http://localhost:5173" {{ nix_shell }} pnpm test

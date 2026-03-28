@@ -1,21 +1,37 @@
 /**
- * Cucumber hooks — browser lifecycle + app health check.
+ * Cucumber hooks — browser lifecycle + server provisioning.
  *
- * TRIFFECT_SERVER must be a URL pointing to a running app instance.
- * The server is started externally (by justfile or manually).
+ * TRIFFECT_SERVER controls how the app is provided:
+ *  - URL (http://...) → reuse an existing server
+ *  - file path        → each worker spawns the binary on a random port
+ *
+ * Random ports (via get-port) let parallel runs across worktrees
+ * coexist without port collisions.
  */
 
 import { Before, After, BeforeAll, AfterAll, Status } from "@cucumber/cucumber";
 import { chromium } from "playwright";
 import type { Browser } from "playwright";
+import getPort from "get-port";
 import { TriggityWorld } from "./world.ts";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import type { ChildProcess } from "node:child_process";
+import { spawn } from "node:child_process";
 
 const workerId = parseInt(process.env.CUCUMBER_WORKER_ID || "0");
 
 let baseUrl: string;
 let browser: Browser;
+let serverProcess: ChildProcess | undefined;
+
+function killServer() {
+  if (serverProcess) {
+    serverProcess.kill("SIGTERM");
+    serverProcess = undefined;
+  }
+}
+process.on("exit", killServer);
 
 const ciArgs = [
   "--no-sandbox",
@@ -42,7 +58,29 @@ async function waitForHealth(url: string, timeoutMs: number): Promise<void> {
 }
 
 BeforeAll(async function () {
-  baseUrl = process.env.TRIFFECT_SERVER || "http://localhost:5173";
+  const triffectServer = process.env.TRIFFECT_SERVER;
+  if (!triffectServer)
+    throw new Error("TRIFFECT_SERVER must be a URL or binary path");
+
+  if (triffectServer.startsWith("http")) {
+    baseUrl = triffectServer;
+  } else {
+    const port = await getPort();
+    baseUrl = `http://127.0.0.1:${port}`;
+    console.log(`[worker:${workerId}] Starting server on port ${port}...`);
+    serverProcess = spawn(triffectServer, [], {
+      stdio: "pipe",
+      env: {
+        ...process.env,
+        TRIFFECT_HOST: "127.0.0.1",
+        TRIFFECT_PORT: String(port),
+      },
+    });
+    serverProcess.stderr?.on("data", (data: Buffer) => {
+      process.stderr.write(`[server:${workerId}] ${data}`);
+    });
+  }
+
   await waitForHealth(baseUrl, 30_000);
   console.log(`[worker:${workerId}] App is healthy at ${baseUrl}`);
 
@@ -55,6 +93,7 @@ BeforeAll(async function () {
 
 AfterAll(async function () {
   if (browser) await browser.close();
+  killServer();
 });
 
 Before(async function (this: TriggityWorld) {
