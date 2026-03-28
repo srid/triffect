@@ -25,6 +25,15 @@ const App: Component = () => {
       <EntryList />
 
       <Calendar />
+
+      <a
+        href="https://github.com/srid/triffect"
+        class="text-xs text-gray-600 hover:text-gray-400 mt-2"
+        target="_blank"
+        rel="noopener"
+      >
+        source
+      </a>
     </div>
   );
 };
