@@ -59,7 +59,7 @@ const App: Component = () => {
 
       <Calendar />
 
-      <footer class="text-center mt-3 max-w-xs px-1 space-y-1">
+      <footer class="text-left mt-3 max-w-xs px-1 space-y-1">
         <p class="text-[11px] text-gray-600 leading-snug">
           <b class="text-green-600">Sensuous</b> — felicitous and innocuous
           feelings (delightful, harmonious). <b class="text-red-500">'Bad'</b> —

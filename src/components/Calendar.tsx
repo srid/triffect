@@ -53,25 +53,18 @@ const Calendar: Component = () => {
     return map;
   });
 
-  // Generate grid: last 4 weeks, aligned to Monday start
+  // Generate grid: exactly 4 rows (weeks), ending on today's column
   const grid = createMemo(() => {
-    const days: { key: string; date: Date; dayOfMonth: number }[] = [];
     const today = new Date();
-    // Find the Monday of the week containing (today - DAYS + 1)
-    const start = daysAgo(DAYS - 1);
-    const dow = start.getDay();
-    const mondayOffset = dow === 0 ? 6 : dow - 1; // days since Monday
-    start.setDate(start.getDate() - mondayOffset);
-
-    const end = new Date(today);
-    const d = new Date(start);
-    while (d <= end) {
-      days.push({
-        key: startOfDay(d),
-        date: new Date(d),
-        dayOfMonth: d.getDate(),
-      });
-      d.setDate(d.getDate() + 1);
+    today.setHours(0, 0, 0, 0);
+    // Monday = 0, Sunday = 6
+    const todayCol = today.getDay() === 0 ? 6 : today.getDay() - 1;
+    // Go back to fill exactly 4 rows: 3 full weeks + current partial week up to today
+    const totalDays = 3 * 7 + todayCol + 1;
+    const days: { key: string; dayOfMonth: number }[] = [];
+    for (let i = totalDays - 1; i >= 0; i--) {
+      const d = daysAgo(i);
+      days.push({ key: startOfDay(d), dayOfMonth: d.getDate() });
     }
     return days;
   });
