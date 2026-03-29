@@ -3,6 +3,7 @@ import { useQuery } from "@triplit/solid";
 import Triangle from "./components/Triangle";
 import EntryList from "./components/EntryList";
 import Calendar from "./components/Calendar";
+import TimePatterns from "./components/TimePatterns";
 import { client } from "./lib/triplit";
 import { averageColor, type Barycentric } from "./lib/coords";
 
@@ -122,6 +123,8 @@ const App: Component = () => {
         onDaySelect={setSelectedDay}
       />
 
+      <TimePatterns />
+
       <button
         class="text-[10px] text-gray-600 hover:text-red-400 mt-6 transition-colors"
         onClick={async () => {
@@ -129,8 +132,12 @@ const App: Component = () => {
           const recent = client
             .query("entries")
             .Where("created_at", ">=", cutoff);
-          const results = await client.fetch(recent);
-          for (const entry of results.values()) {
+          const found = await client.fetch(recent);
+          const count = [...found.values()].length;
+          if (count === 0) return;
+          if (!confirm(`Delete ${count} entries from the last 5 minutes?`))
+            return;
+          for (const entry of found.values()) {
             await client.delete("entries", entry.id);
           }
         }}
