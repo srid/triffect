@@ -5,7 +5,7 @@ import EntryForm from "./components/EntryForm";
 import EntryList from "./components/EntryList";
 import Calendar from "./components/Calendar";
 import { client } from "./lib/triplit";
-import { barycentricToColor, type Barycentric } from "./lib/coords";
+import { averageColor, type Barycentric } from "./lib/coords";
 
 function startOfToday(): Date {
   const d = new Date();
@@ -22,20 +22,9 @@ const App: Component = () => {
     .Where("created_at", ">=", startOfToday());
   const { results: todayResults } = useQuery(client, todayQuery);
 
-  const glowColor = createMemo(() => {
-    const entries = [...(todayResults()?.values() ?? [])];
-    if (entries.length === 0) return undefined;
-    const avg: Barycentric = { good: 0, bad: 0, naivete: 0 };
-    for (const e of entries) {
-      avg.good += e.good;
-      avg.bad += e.bad;
-      avg.naivete += e.naivete;
-    }
-    avg.good /= entries.length;
-    avg.bad /= entries.length;
-    avg.naivete /= entries.length;
-    return barycentricToColor(avg);
-  });
+  const glowColor = createMemo(() =>
+    averageColor([...(todayResults()?.values() ?? [])]),
+  );
 
   function handleSaved() {
     setSelected(null);

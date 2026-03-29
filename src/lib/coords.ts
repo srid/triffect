@@ -83,6 +83,23 @@ export function barycentricToColor(b: Barycentric): string {
   return `rgb(${r}, ${g}, ${bl})`;
 }
 
+/** Average color from an array of barycentric entries. */
+export function averageColor(
+  entries: ReadonlyArray<Barycentric>,
+): string | undefined {
+  if (entries.length === 0) return undefined;
+  const avg: Barycentric = { good: 0, bad: 0, naivete: 0 };
+  for (const e of entries) {
+    avg.good += e.good;
+    avg.bad += e.bad;
+    avg.naivete += e.naivete;
+  }
+  avg.good /= entries.length;
+  avg.bad /= entries.length;
+  avg.naivete /= entries.length;
+  return barycentricToColor(avg);
+}
+
 /** Check if a point is inside the triangle using raw (unclamped) barycentric coords. */
 export function isInsideTriangle(p: Point, v: TriangleVertices): boolean {
   const b = rawBarycentric(p, v);
