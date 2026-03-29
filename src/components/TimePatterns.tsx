@@ -32,8 +32,15 @@ const TimePatterns: Component = () => {
       setGeo({ status: "error", message: "Geolocation not available" });
       return;
     }
+    console.log("[TimePatterns] requesting geolocation...");
+    const timeout = setTimeout(() => {
+      console.log("[TimePatterns] geolocation timed out");
+      setGeo({ status: "error", message: "Location request timed out" });
+    }, 10000);
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
+        clearTimeout(timeout);
         const { sunrise, sunset } = sunTimes(
           new Date(),
           pos.coords.latitude,
@@ -45,8 +52,11 @@ const TimePatterns: Component = () => {
         setGeo({ status: "ok", sunrise, sunset });
       },
       (err) => {
+        clearTimeout(timeout);
+        console.log("[TimePatterns] geolocation error:", err.message);
         setGeo({ status: "error", message: err.message });
       },
+      { timeout: 10000 },
     );
   });
 
