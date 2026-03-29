@@ -118,6 +118,7 @@ const Triangle: Component<Props> = (props) => {
     const p = getPoint(e);
     if (isInsideTriangle(p, verts())) {
       setTapCount((c) => c + 1);
+      navigator.vibrate?.(15);
       props.onSelect(pixelToBarycentric(p, verts()));
     }
   }
