@@ -12,6 +12,12 @@ import MoodDot from "./MoodDot";
 import { sunTimes, formatHour } from "../lib/sun";
 import type { Barycentric } from "../lib/coords";
 
+function startOfToday(): Date {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
 function daysAgo(n: number): Date {
   const d = new Date();
   d.setDate(d.getDate() - n);
@@ -24,12 +30,54 @@ type GeoState =
   | { status: "ok"; sunrise: number; sunset: number }
   | { status: "error"; message: string };
 
+interface Bucket {
+  label: string;
+  sub: string;
+  start: number;
+  end: number;
+}
+
+interface BucketResult extends Bucket {
+  entries: Barycentric[];
+  count: number;
+}
+
+function classifyEntries(
+  entries: Array<{
+    good: number;
+    bad: number;
+    naivete: number;
+    created_at: Date | string;
+  }>,
+  buckets: Bucket[],
+): BucketResult[] {
+  return buckets.map((bucket) => {
+    const isDaytime = bucket.start < bucket.end;
+    const inBucket = entries.filter((e) => {
+      const h =
+        new Date(e.created_at).getHours() +
+        new Date(e.created_at).getMinutes() / 60;
+      return isDaytime
+        ? h >= bucket.start && h < bucket.end
+        : h >= bucket.start || h < bucket.end;
+    });
+    return {
+      ...bucket,
+      entries: inBucket.map((e) => ({
+        good: e.good,
+        bad: e.bad,
+        naivete: e.naivete,
+      })),
+      count: inBucket.length,
+    };
+  });
+}
+
 const TimePatterns: Component = () => {
   const [geo, setGeo] = createSignal<GeoState>({ status: "loading" });
 
   onMount(async () => {
     try {
-      // IP-based geolocation — no permissions needed
       const res = await fetch("https://ipapi.co/json/");
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
@@ -50,11 +98,11 @@ const TimePatterns: Component = () => {
     }
   });
 
-  // Average mood during day vs night over last 28 days
   const query = client.query("entries").Where("created_at", ">=", daysAgo(28));
   const { results } = useQuery(client, query);
+  const allEntries = () => [...(results()?.values() ?? [])];
 
-  const buckets = createMemo(() => {
+  const buckets = createMemo((): Bucket[] => {
     const g = geo();
     if (g.status !== "ok") return [];
     return [
@@ -73,37 +121,29 @@ const TimePatterns: Component = () => {
     ];
   });
 
-  const bucketAverages = createMemo(() => {
-    const entries = [...(results()?.values() ?? [])];
-    if (entries.length === 0) return [];
+  const timeRanges = createMemo(() => {
+    const b = buckets();
+    if (b.length === 0) return [];
+    const all = allEntries();
+    const today = startOfToday();
+    const weekAgo = daysAgo(7);
 
-    return buckets().map((bucket) => {
-      const isDaytime = bucket.start < bucket.end;
-      const inBucket = entries.filter((e) => {
-        const h =
-          new Date(e.created_at).getHours() +
-          new Date(e.created_at).getMinutes() / 60;
-        return isDaytime
-          ? h >= bucket.start && h < bucket.end
-          : h >= bucket.start || h < bucket.end;
-      });
-      const baryEntries: Barycentric[] = inBucket.map((e) => ({
-        good: e.good,
-        bad: e.bad,
-        naivete: e.naivete,
-      }));
-      return { ...bucket, entries: baryEntries, count: inBucket.length };
-    });
+    const todayEntries = all.filter((e) => new Date(e.created_at) >= today);
+    const weekEntries = all.filter((e) => new Date(e.created_at) >= weekAgo);
+
+    return [
+      { label: "Today", data: classifyEntries(todayEntries, b) },
+      { label: "7 days", data: classifyEntries(weekEntries, b) },
+      { label: "28 days", data: classifyEntries(all, b) },
+    ];
   });
 
-  const hasData = () => bucketAverages().some((b) => b.count > 0);
+  const hasData = () =>
+    timeRanges().some((r) => r.data.some((b) => b.count > 0));
 
   return (
     <div class="w-full max-w-xs px-1">
-      <h2 class="text-sm font-medium text-gray-400 mb-1">
-        Day vs Night{" "}
-        <span class="font-normal text-gray-600">(last 28 days)</span>
-      </h2>
+      <h2 class="text-sm font-medium text-gray-400 mb-2">Day vs Night</h2>
       <Show when={geo().status === "loading"}>
         <p class="text-[10px] text-gray-600">Getting location...</p>
       </Show>
@@ -113,29 +153,44 @@ const TimePatterns: Component = () => {
         </p>
       </Show>
       <Show when={geo().status === "ok" && hasData()}>
-        <div class="flex justify-center gap-6">
-          <For each={bucketAverages()}>
-            {(bucket) => (
-              <div class="flex flex-col items-center gap-1">
-                <Show
-                  when={bucket.count > 0}
-                  fallback={
-                    <div
-                      class="rounded bg-gray-900 flex items-center justify-center"
-                      style={{ width: "44px", height: "44px" }}
-                    >
-                      <span class="text-[8px] text-gray-700">—</span>
-                    </div>
-                  }
-                >
-                  <MoodDot entries={bucket.entries} size={44} />
-                </Show>
-                <span class="text-[10px] text-gray-400">{bucket.label}</span>
-                <span class="text-[8px] text-gray-600">{bucket.sub}</span>
-                <span class="text-[8px] text-gray-600">
-                  {bucket.count > 0 ? `${bucket.count} entries` : ""}
-                </span>
-              </div>
+        <div class="flex flex-col gap-3">
+          <For each={timeRanges()}>
+            {(range) => (
+              <Show when={range.data.some((b) => b.count > 0)}>
+                <div>
+                  <p class="text-[10px] text-gray-500 mb-1">{range.label}</p>
+                  <div class="flex justify-center gap-6">
+                    <For each={range.data}>
+                      {(bucket) => (
+                        <div class="flex flex-col items-center gap-0.5">
+                          <Show
+                            when={bucket.count > 0}
+                            fallback={
+                              <div
+                                class="rounded bg-gray-900 flex items-center justify-center"
+                                style={{ width: "36px", height: "36px" }}
+                              >
+                                <span class="text-[8px] text-gray-700">—</span>
+                              </div>
+                            }
+                          >
+                            <MoodDot entries={bucket.entries} size={36} />
+                          </Show>
+                          <span class="text-[9px] text-gray-400">
+                            {bucket.label}
+                          </span>
+                          <span class="text-[8px] text-gray-600">
+                            {bucket.sub}
+                          </span>
+                          <span class="text-[8px] text-gray-600">
+                            {bucket.count > 0 ? `${bucket.count}` : ""}
+                          </span>
+                        </div>
+                      )}
+                    </For>
+                  </div>
+                </div>
+              </Show>
             )}
           </For>
         </div>
