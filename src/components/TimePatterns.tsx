@@ -153,47 +153,64 @@ const TimePatterns: Component = () => {
         </p>
       </Show>
       <Show when={geo().status === "ok" && hasData()}>
-        <div class="flex flex-col gap-3">
-          <For each={timeRanges()}>
-            {(range) => (
-              <Show when={range.data.some((b) => b.count > 0)}>
-                <div>
-                  <p class="text-[10px] text-gray-500 mb-1">{range.label}</p>
-                  <div class="flex justify-center gap-6">
-                    <For each={range.data}>
-                      {(bucket) => (
-                        <div class="flex flex-col items-center gap-0.5">
-                          <Show
-                            when={bucket.count > 0}
-                            fallback={
-                              <div
-                                class="rounded bg-gray-900 flex items-center justify-center"
-                                style={{ width: "36px", height: "36px" }}
-                              >
-                                <span class="text-[8px] text-gray-700">—</span>
+        {(() => {
+          const g = geo() as { status: "ok"; sunrise: number; sunset: number };
+          return (
+            <table class="w-full text-center text-[10px]">
+              <thead>
+                <tr class="text-gray-500">
+                  <th />
+                  <th class="font-normal pb-1">
+                    Day
+                    <span class="block text-[8px] text-gray-600">
+                      {formatHour(g.sunrise)}–{formatHour(g.sunset)}
+                    </span>
+                  </th>
+                  <th class="font-normal pb-1">
+                    Night
+                    <span class="block text-[8px] text-gray-600">
+                      {formatHour(g.sunset)}–{formatHour(g.sunrise)}
+                    </span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <For each={timeRanges()}>
+                  {(range) => (
+                    <Show when={range.data.some((b) => b.count > 0)}>
+                      <tr>
+                        <td class="text-gray-500 text-right pr-2 py-1">
+                          {range.label}
+                        </td>
+                        <For each={range.data}>
+                          {(bucket) => (
+                            <td class="py-1">
+                              <div class="flex flex-col items-center gap-0.5">
+                                <Show
+                                  when={bucket.count > 0}
+                                  fallback={
+                                    <span class="text-[8px] text-gray-700">
+                                      —
+                                    </span>
+                                  }
+                                >
+                                  <MoodDot entries={bucket.entries} size={28} />
+                                  <span class="text-[8px] text-gray-600">
+                                    {bucket.count}
+                                  </span>
+                                </Show>
                               </div>
-                            }
-                          >
-                            <MoodDot entries={bucket.entries} size={36} />
-                          </Show>
-                          <span class="text-[9px] text-gray-400">
-                            {bucket.label}
-                          </span>
-                          <span class="text-[8px] text-gray-600">
-                            {bucket.sub}
-                          </span>
-                          <span class="text-[8px] text-gray-600">
-                            {bucket.count > 0 ? `${bucket.count}` : ""}
-                          </span>
-                        </div>
-                      )}
-                    </For>
-                  </div>
-                </div>
-              </Show>
-            )}
-          </For>
-        </div>
+                            </td>
+                          )}
+                        </For>
+                      </tr>
+                    </Show>
+                  )}
+                </For>
+              </tbody>
+            </table>
+          );
+        })()}
       </Show>
     </div>
   );
