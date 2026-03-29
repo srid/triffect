@@ -38,9 +38,10 @@ export function sunTimes(
 }
 
 /** Format fractional hour as "H:MM AM/PM" */
-export function formatHour(h: number): string {
-  const hours = Math.floor(h);
-  const mins = Math.round((h - hours) * 60);
+export function formatHour(fractional: number): string {
+  let mins = Math.round(fractional * 60);
+  let hours = Math.floor(mins / 60) % 24;
+  mins = mins % 60;
   const h12 = hours % 12 || 12;
   const ampm = hours < 12 ? "a" : "p";
   return mins === 0
