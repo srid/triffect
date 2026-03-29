@@ -27,37 +27,27 @@ type GeoState =
 const TimePatterns: Component = () => {
   const [geo, setGeo] = createSignal<GeoState>({ status: "loading" });
 
-  onMount(() => {
-    if (!navigator.geolocation) {
-      setGeo({ status: "error", message: "Geolocation not available" });
-      return;
+  onMount(async () => {
+    try {
+      // IP-based geolocation — no permissions needed
+      const res = await fetch("https://ipapi.co/json/");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const lat = data.latitude;
+      const lng = data.longitude;
+      if (typeof lat !== "number" || typeof lng !== "number") {
+        throw new Error("Invalid location data");
+      }
+      const { sunrise, sunset } = sunTimes(new Date(), lat, lng);
+      console.log(
+        `[TimePatterns] lat=${lat.toFixed(2)} lng=${lng.toFixed(2)} sunrise=${formatHour(sunrise)} sunset=${formatHour(sunset)}`,
+      );
+      setGeo({ status: "ok", sunrise, sunset });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      console.log("[TimePatterns] location error:", msg);
+      setGeo({ status: "error", message: msg });
     }
-    console.log("[TimePatterns] requesting geolocation...");
-    const timeout = setTimeout(() => {
-      console.log("[TimePatterns] geolocation timed out");
-      setGeo({ status: "error", message: "Location request timed out" });
-    }, 10000);
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        clearTimeout(timeout);
-        const { sunrise, sunset } = sunTimes(
-          new Date(),
-          pos.coords.latitude,
-          pos.coords.longitude,
-        );
-        console.log(
-          `[TimePatterns] lat=${pos.coords.latitude.toFixed(2)} lng=${pos.coords.longitude.toFixed(2)} sunrise=${formatHour(sunrise)} sunset=${formatHour(sunset)}`,
-        );
-        setGeo({ status: "ok", sunrise, sunset });
-      },
-      (err) => {
-        clearTimeout(timeout);
-        console.log("[TimePatterns] geolocation error:", err.message);
-        setGeo({ status: "error", message: err.message });
-      },
-      { timeout: 10000 },
-    );
   });
 
   // Average mood during day vs night over last 28 days
