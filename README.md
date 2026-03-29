@@ -4,9 +4,9 @@ Triangular affect journaling. Tap a point inside a triangle to log where you are
 
 The three vertices map to [actualfreedom.com.au](http://actualfreedom.com.au)'s categorization of feelings:
 
-- **Naivete** (green, top) — the naive, innocuous, felicitous feelings characteristic of the actual world
-- **Bad** (red, bottom-left) — malice and sorrow
-- **Good** (pink, bottom-right) — love and compassion
+- **Sensuous** (green, top) — felicitous and innocuous feelings (delightful, harmonious)
+- **'Bad'** (red, bottom-left) — hostile and invidious passions (hateful, fearful)
+- **'Good'** (pink, bottom-right) — affectionate and desirable passions (loving, trusting)
 
 Your tap position is stored as [barycentric coordinates](https://en.wikipedia.org/wiki/Barycentric_coordinate_system) — three values ∈ [0,1] that sum to 1, representing proximity to each vertex.
 
