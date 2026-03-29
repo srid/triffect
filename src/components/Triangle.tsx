@@ -127,6 +127,8 @@ const Triangle: Component<Props> = (props) => {
   }
 
   async function handleClick(e: MouseEvent | TouchEvent) {
+    // Prevent touch from also firing a synthetic click
+    if ("touches" in e) e.preventDefault();
     const p = getPoint(e);
     if (isInsideTriangle(p, verts())) {
       const coords = pixelToBarycentric(p, verts());
