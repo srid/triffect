@@ -4,12 +4,23 @@ import Triangle from "./components/Triangle";
 import EntryList from "./components/EntryList";
 import Calendar from "./components/Calendar";
 import { client } from "./lib/triplit";
-import { averageColor } from "./lib/coords";
+import { averageColor, type Barycentric } from "./lib/coords";
 
 function startOfToday(): Date {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
   return d;
+}
+
+function daysAgo(n: number): Date {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function dateKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 const App: Component = () => {
@@ -22,11 +33,48 @@ const App: Component = () => {
 
   const glowColor = createMemo(() => averageColor(todayEntries()));
 
+  // Past 7 days (excluding today) for weekly averages
+  const weekQuery = client
+    .query("entries")
+    .Where("created_at", ">=", daysAgo(7))
+    .Where("created_at", "<", startOfToday());
+  const { results: weekResults } = useQuery(client, weekQuery);
+
+  const weeklyAverages = createMemo(() => {
+    const entries = [...(weekResults()?.values() ?? [])];
+    const byDay = new Map<string, Barycentric[]>();
+    for (const e of entries) {
+      const key = dateKey(new Date(e.created_at));
+      const arr = byDay.get(key) ?? [];
+      arr.push({ good: e.good, bad: e.bad, naivete: e.naivete });
+      byDay.set(key, arr);
+    }
+    const avgs: Barycentric[] = [];
+    for (const dayEntries of byDay.values()) {
+      const sum = { good: 0, bad: 0, naivete: 0 };
+      for (const e of dayEntries) {
+        sum.good += e.good;
+        sum.bad += e.bad;
+        sum.naivete += e.naivete;
+      }
+      avgs.push({
+        good: sum.good / dayEntries.length,
+        bad: sum.bad / dayEntries.length,
+        naivete: sum.naivete / dayEntries.length,
+      });
+    }
+    return avgs;
+  });
+
   return (
     <div class="min-h-screen bg-gray-950 flex flex-col items-center px-3 py-3 gap-2">
       <h1 class="text-base font-semibold text-gray-200">Triffect</h1>
 
-      <Triangle glowColor={glowColor()} todayEntries={todayEntries()} />
+      <Triangle
+        glowColor={glowColor()}
+        todayEntries={todayEntries()}
+        weeklyAverages={weeklyAverages()}
+      />
 
       <p class="text-[10px] text-gray-600">Tap to log mood</p>
 

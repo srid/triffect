@@ -31,6 +31,7 @@ const GOOD_COLOR = [250, 50, 180] as const;
 interface Props {
   glowColor?: string;
   todayEntries?: ReadonlyArray<Barycentric & { created_at: Date | string }>;
+  weeklyAverages?: ReadonlyArray<Barycentric>;
 }
 
 /** Distance from point to line segment. Used for anti-aliased edges. */
@@ -226,6 +227,24 @@ const Triangle: Component<Props> = (props) => {
         >
           'Good'
         </text>
+
+        {/* Weekly average dots (faded, behind today's trail) */}
+        <For each={props.weeklyAverages ?? []}>
+          {(avg) => {
+            const p = barycentricToPixel(avg, verts());
+            return (
+              <circle
+                cx={p.x}
+                cy={p.y}
+                r="6"
+                fill={barycentricToColor(avg)}
+                opacity="0.25"
+                stroke="rgba(255,255,255,0.1)"
+                stroke-width="1"
+              />
+            );
+          }}
+        </For>
 
         {/* Trail: connecting line */}
         <Show when={trailPath()}>
