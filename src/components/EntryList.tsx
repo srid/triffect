@@ -222,10 +222,10 @@ const DotRowView: Component<{
 // ── View 4: Stacked Arcs ──
 
 const ARC_W = 240;
-const ARC_H = 140;
+const ARC_H = 160;
 const ARC_CX = ARC_W / 2;
 const ARC_CY = ARC_H - 10;
-const BASE_R = 40;
+const BASE_R = 55;
 const ARC_WIDTH = 6;
 const ARC_GAP = 2;
 const ARC_SPAN_DEG = 8;
@@ -296,7 +296,7 @@ const ArcsView: Component<{
   entries: Entry[];
   onHover: (t: string | null) => void;
 }> = (props) => {
-  const MOOD_SIZE = 36;
+  const MOOD_SIZE = 30;
 
   return (
     <svg
