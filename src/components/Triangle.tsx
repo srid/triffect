@@ -1,11 +1,4 @@
-import {
-  Component,
-  createSignal,
-  createMemo,
-  onMount,
-  For,
-  Show,
-} from "solid-js";
+import { Component, createSignal, createMemo, onMount, For } from "solid-js";
 import { ulid } from "ulid";
 import { client } from "../lib/triplit";
 import {
@@ -79,13 +72,6 @@ const Triangle: Component<Props> = (props) => {
       pixel: barycentricToPixel(e, verts()),
       color: barycentricToColor(e),
     }));
-  });
-
-  // Trail path as SVG polyline points
-  const trailPath = createMemo(() => {
-    const pts = trailPoints();
-    if (pts.length < 2) return "";
-    return pts.map((p) => `${p.pixel.x},${p.pixel.y}`).join(" ");
   });
 
   onMount(() => {
@@ -246,17 +232,6 @@ const Triangle: Component<Props> = (props) => {
           }}
         </For>
 
-        {/* Trail: connecting line */}
-        <Show when={trailPath()}>
-          <polyline
-            points={trailPath()}
-            fill="none"
-            stroke="rgba(255,255,255,0.08)"
-            stroke-width="1"
-            stroke-linejoin="round"
-          />
-        </Show>
-
         {/* Trail: dots at each entry position */}
         <For each={trailPoints()}>
           {(pt) => (
@@ -276,32 +251,18 @@ const Triangle: Component<Props> = (props) => {
           />
         )}
 
-        {/* Tap animation */}
+        {/* Tap animation: pulse ring only */}
         <For each={lastTap() ? [tapCount()] : []}>
           {() => (
-            <>
-              <circle
-                cx={lastTap()!.x}
-                cy={lastTap()!.y}
-                r="12"
-                fill="none"
-                stroke="white"
-                stroke-width="2"
-                style={{ animation: "pulse-ring 0.6s ease-out forwards" }}
-              />
-              <circle
-                cx={lastTap()!.x}
-                cy={lastTap()!.y}
-                r="12"
-                fill="white"
-                stroke="rgba(0,0,0,0.5)"
-                stroke-width="3"
-                style={{
-                  "transform-origin": `${lastTap()!.x}px ${lastTap()!.y}px`,
-                  animation: "marker-in 0.3s ease-out forwards",
-                }}
-              />
-            </>
+            <circle
+              cx={lastTap()!.x}
+              cy={lastTap()!.y}
+              r="12"
+              fill="none"
+              stroke="white"
+              stroke-width="2"
+              style={{ animation: "pulse-ring 0.6s ease-out forwards" }}
+            />
           )}
         </For>
       </svg>
