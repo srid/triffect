@@ -115,20 +115,16 @@ const Triangle: Component<Props> = (props) => {
     ctx.putImageData(imageData, 0, 0);
   });
 
-  function getPoint(e: MouseEvent | TouchEvent): Point {
+  function getPoint(e: MouseEvent): Point {
     const el = e.currentTarget as HTMLElement;
     const rect = el.getBoundingClientRect();
-    const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
-    const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
     return {
-      x: ((clientX - rect.left) / rect.width) * W,
-      y: ((clientY - rect.top) / rect.height) * H,
+      x: ((e.clientX - rect.left) / rect.width) * W,
+      y: ((e.clientY - rect.top) / rect.height) * H,
     };
   }
 
-  async function handleClick(e: MouseEvent | TouchEvent) {
-    // Prevent touch from also firing a synthetic click
-    if ("touches" in e) e.preventDefault();
+  async function handleClick(e: MouseEvent) {
     const p = getPoint(e);
     if (isInsideTriangle(p, verts())) {
       const coords = pixelToBarycentric(p, verts());
@@ -179,7 +175,6 @@ const Triangle: Component<Props> = (props) => {
         height={Math.ceil(H)}
         class="absolute inset-0 w-full h-full"
         onClick={handleClick}
-        onTouchStart={handleClick}
         onMouseMove={handleMove}
         onMouseLeave={() => setHovered(null)}
       />
