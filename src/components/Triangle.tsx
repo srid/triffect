@@ -1,8 +1,17 @@
-import { Component, createSignal, createMemo, onMount, For } from "solid-js";
 import {
-  triangleVertices,
+  Component,
+  createSignal,
+  createMemo,
+  onMount,
+  For,
+  Show,
+} from "solid-js";
+import { ulid } from "ulid";
+import { client } from "../lib/triplit";
+import {
   pixelToBarycentric,
   barycentricToPixel,
+  barycentricToColor,
   isInsideTriangle,
   type Barycentric,
   type Point,
@@ -14,15 +23,14 @@ const PADDING_X = 60;
 const PADDING_TOP = 50; // space for top label
 const PADDING_BOTTOM = 40; // space for bottom labels
 
-// Vertex colors: Naivete = green, Bad = dark crimson, Good = hot pink/magenta
+// Vertex colors: Naivete = green, Bad = bright red, Good = rose pink
 const NAIVETE_COLOR = [34, 197, 94] as const;
 const BAD_COLOR = [220, 60, 60] as const;
 const GOOD_COLOR = [250, 50, 180] as const;
 
 interface Props {
-  onSelect: (coords: Barycentric) => void;
-  selected?: Barycentric;
   glowColor?: string;
+  todayEntries?: ReadonlyArray<Barycentric & { created_at: Date | string }>;
 }
 
 /** Distance from point to line segment. Used for anti-aliased edges. */
@@ -56,10 +64,27 @@ const Triangle: Component<Props> = (props) => {
 
   const [hovered, setHovered] = createSignal<Point | null>(null);
   const [tapCount, setTapCount] = createSignal(0);
+  const [lastTap, setLastTap] = createSignal<Point | null>(null);
 
-  const selectedPixel = createMemo(() => {
-    if (!props.selected) return null;
-    return barycentricToPixel(props.selected, verts());
+  // Today's trail: sorted by time, mapped to pixel positions
+  const trailPoints = createMemo(() => {
+    const entries = props.todayEntries;
+    if (!entries || entries.length === 0) return [];
+    const sorted = [...entries].sort(
+      (a, b) =>
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    );
+    return sorted.map((e) => ({
+      pixel: barycentricToPixel(e, verts()),
+      color: barycentricToColor(e),
+    }));
+  });
+
+  // Trail path as SVG polyline points
+  const trailPath = createMemo(() => {
+    const pts = trailPoints();
+    if (pts.length < 2) return "";
+    return pts.map((p) => `${p.pixel.x},${p.pixel.y}`).join(" ");
   });
 
   onMount(() => {
@@ -114,12 +139,20 @@ const Triangle: Component<Props> = (props) => {
     };
   }
 
-  function handleClick(e: MouseEvent | TouchEvent) {
+  async function handleClick(e: MouseEvent | TouchEvent) {
     const p = getPoint(e);
     if (isInsideTriangle(p, verts())) {
+      const coords = pixelToBarycentric(p, verts());
       setTapCount((c) => c + 1);
+      setLastTap(p);
       navigator.vibrate?.(15);
-      props.onSelect(pixelToBarycentric(p, verts()));
+      await client.insert("entries", {
+        id: ulid(),
+        good: coords.good,
+        bad: coords.bad,
+        naivete: coords.naivete,
+        created_at: new Date(),
+      });
     }
   }
 
@@ -194,6 +227,31 @@ const Triangle: Component<Props> = (props) => {
           'Good'
         </text>
 
+        {/* Trail: connecting line */}
+        <Show when={trailPath()}>
+          <polyline
+            points={trailPath()}
+            fill="none"
+            stroke="rgba(255,255,255,0.25)"
+            stroke-width="2"
+            stroke-linejoin="round"
+          />
+        </Show>
+
+        {/* Trail: dots at each entry position */}
+        <For each={trailPoints()}>
+          {(pt) => (
+            <circle
+              cx={pt.pixel.x}
+              cy={pt.pixel.y}
+              r="8"
+              fill={pt.color}
+              stroke="rgba(0,0,0,0.3)"
+              stroke-width="1.5"
+            />
+          )}
+        </For>
+
         {hovered() && (
           <circle
             cx={hovered()!.x}
@@ -206,13 +264,13 @@ const Triangle: Component<Props> = (props) => {
           />
         )}
 
-        {/* Key on tapCount to force re-mount and replay animations */}
-        <For each={selectedPixel() ? [tapCount()] : []}>
+        {/* Tap animation */}
+        <For each={lastTap() ? [tapCount()] : []}>
           {() => (
             <>
               <circle
-                cx={selectedPixel()!.x}
-                cy={selectedPixel()!.y}
+                cx={lastTap()!.x}
+                cy={lastTap()!.y}
                 r="12"
                 fill="none"
                 stroke="white"
@@ -220,14 +278,14 @@ const Triangle: Component<Props> = (props) => {
                 style={{ animation: "pulse-ring 0.6s ease-out forwards" }}
               />
               <circle
-                cx={selectedPixel()!.x}
-                cy={selectedPixel()!.y}
+                cx={lastTap()!.x}
+                cy={lastTap()!.y}
                 r="12"
                 fill="white"
                 stroke="rgba(0,0,0,0.5)"
                 stroke-width="3"
                 style={{
-                  "transform-origin": `${selectedPixel()!.x}px ${selectedPixel()!.y}px`,
+                  "transform-origin": `${lastTap()!.x}px ${lastTap()!.y}px`,
                   animation: "marker-in 0.3s ease-out forwards",
                 }}
               />

@@ -1,11 +1,10 @@
-import { Component, createSignal, createMemo, Show } from "solid-js";
+import { type Component, createMemo } from "solid-js";
 import { useQuery } from "@triplit/solid";
 import Triangle from "./components/Triangle";
-import EntryForm from "./components/EntryForm";
 import EntryList from "./components/EntryList";
 import Calendar from "./components/Calendar";
 import { client } from "./lib/triplit";
-import { averageColor, type Barycentric } from "./lib/coords";
+import { averageColor } from "./lib/coords";
 
 function startOfToday(): Date {
   const d = new Date();
@@ -14,35 +13,22 @@ function startOfToday(): Date {
 }
 
 const App: Component = () => {
-  const [selected, setSelected] = createSignal<Barycentric | null>(null);
-
-  // Today's entries for glow color
   const todayQuery = client
     .query("entries")
     .Where("created_at", ">=", startOfToday());
   const { results: todayResults } = useQuery(client, todayQuery);
 
-  const glowColor = createMemo(() =>
-    averageColor([...(todayResults()?.values() ?? [])]),
-  );
+  const todayEntries = createMemo(() => [...(todayResults()?.values() ?? [])]);
 
-  function handleSaved() {
-    setSelected(null);
-  }
+  const glowColor = createMemo(() => averageColor(todayEntries()));
 
   return (
     <div class="min-h-screen bg-gray-950 flex flex-col items-center px-3 py-3 gap-2">
       <h1 class="text-base font-semibold text-gray-200">Triffect</h1>
 
-      <Triangle
-        onSelect={setSelected}
-        selected={selected() ?? undefined}
-        glowColor={glowColor()}
-      />
+      <Triangle glowColor={glowColor()} todayEntries={todayEntries()} />
 
-      <Show when={selected()}>
-        <EntryForm coords={selected()!} onSaved={handleSaved} />
-      </Show>
+      <p class="text-[10px] text-gray-600">Tap to log mood</p>
 
       <EntryList />
 
