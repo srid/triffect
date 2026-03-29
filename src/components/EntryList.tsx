@@ -8,11 +8,8 @@ import {
 } from "solid-js";
 import { useQuery } from "@triplit/solid";
 import { client } from "../lib/triplit";
-import {
-  averageColor,
-  barycentricToColor,
-  type Barycentric,
-} from "../lib/coords";
+import { barycentricToColor, type Barycentric } from "../lib/coords";
+import MoodDot from "./MoodDot";
 
 // ── Data helpers ──
 
@@ -299,7 +296,7 @@ const ArcsView: Component<{
   entries: Entry[];
   onHover: (t: string | null) => void;
 }> = (props) => {
-  const avgColor = () => averageColor(props.entries);
+  const MOOD_SIZE = 36;
 
   return (
     <svg
@@ -352,16 +349,15 @@ const ArcsView: Component<{
           />
         )}
       </For>
-      {/* Center: average mood dot */}
-      <Show when={avgColor()}>
-        <circle
-          cx={ARC_CX}
-          cy={ARC_CY - 6}
-          r="8"
-          fill={avgColor()}
-          opacity="0.7"
-        />
-      </Show>
+      {/* Center: average mood mini-triangle */}
+      <foreignObject
+        x={ARC_CX - MOOD_SIZE / 2}
+        y={ARC_CY - MOOD_SIZE - 2}
+        width={MOOD_SIZE}
+        height={MOOD_SIZE}
+      >
+        <MoodDot entries={props.entries} size={MOOD_SIZE} />
+      </foreignObject>
     </svg>
   );
 };

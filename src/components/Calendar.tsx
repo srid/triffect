@@ -1,7 +1,7 @@
 import { Component, For, createMemo } from "solid-js";
 import { useQuery } from "@triplit/solid";
 import { client } from "../lib/triplit";
-import { barycentricToColor, type Barycentric } from "../lib/coords";
+import MoodDot from "./MoodDot";
 
 const WEEKS = 4;
 const DAYS = WEEKS * 7;
@@ -106,20 +106,21 @@ const Calendar: Component = () => {
         <For each={grid()}>
           {(day) => {
             const agg = () => dayMap().get(day.key);
-            const color = () => {
-              const a = agg();
-              if (!a) return undefined;
-              const b: Barycentric = {
-                good: a.good / a.count,
-                bad: a.bad / a.count,
-                naivete: a.naivete / a.count,
-              };
-              return barycentricToColor(b);
-            };
             const dotSize = () => {
               const a = agg();
               if (!a) return 0;
               return Math.min(24, 10 + a.count * 3);
+            };
+            const dayEntries = () => {
+              const a = agg();
+              if (!a) return [];
+              return [
+                {
+                  good: a.good / a.count,
+                  bad: a.bad / a.count,
+                  naivete: a.naivete / a.count,
+                },
+              ];
             };
 
             return (
@@ -130,15 +131,8 @@ const Calendar: Component = () => {
                   "bg-gray-800 ring-1 ring-gray-600": isToday(day.key),
                 }}
               >
-                {color() ? (
-                  <span
-                    class="rounded-full"
-                    style={{
-                      "background-color": color(),
-                      width: `${dotSize()}px`,
-                      height: `${dotSize()}px`,
-                    }}
-                  />
+                {agg() ? (
+                  <MoodDot entries={dayEntries()} size={dotSize()} />
                 ) : (
                   <span class="text-[9px] text-gray-700">{day.dayOfMonth}</span>
                 )}
