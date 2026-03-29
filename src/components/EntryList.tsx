@@ -364,7 +364,14 @@ const ArcsView: Component<{
 
 // ── Main Component ──
 
-const EntryList: Component = () => {
+interface EntryListProps {
+  /** Label to show (e.g. "Today" or a date string). */
+  label?: string;
+  /** Entries to display. When provided, skips internal query. */
+  entries?: Entry[];
+}
+
+const EntryList: Component<EntryListProps> = (props) => {
   const [viewMode, setViewMode] = createSignal<ViewMode>(loadViewMode());
   const [hoveredTime, setHoveredTime] = createSignal<string | null>(null);
 
@@ -373,17 +380,20 @@ const EntryList: Component = () => {
     localStorage.setItem("triffect-view-mode", mode);
   }
 
-  const query = client
+  // Use provided entries or query today's
+  const todayQuery = client
     .query("entries")
     .Where("created_at", ">=", startOfToday())
     .Order("created_at", "DESC");
-  const { results, fetchingLocal } = useQuery(client, query);
-  const entries = () => [...(results()?.values() ?? [])];
+  const { results, fetchingLocal } = useQuery(client, todayQuery);
+  const entries = () => props.entries ?? [...(results()?.values() ?? [])];
+  const loading = () => !props.entries && fetchingLocal();
+  const label = () => props.label ?? "Today";
 
   return (
     <div class="flex flex-col items-center my-4">
       <div class="flex items-center justify-center gap-2 mb-2">
-        <h2 class="text-sm font-medium text-gray-400">Today</h2>
+        <h2 class="text-sm font-medium text-gray-400">{label()}</h2>
         <Show when={entries().length > 0}>
           <div class="flex rounded-md bg-gray-800 p-0.5 gap-0.5">
             <For each={VIEW_MODES}>
@@ -405,7 +415,7 @@ const EntryList: Component = () => {
         </Show>
       </div>
       <Show
-        when={!fetchingLocal()}
+        when={!loading()}
         fallback={<p class="text-xs text-gray-500">Loading...</p>}
       >
         <Show

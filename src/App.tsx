@@ -1,4 +1,4 @@
-import { type Component, createMemo } from "solid-js";
+import { type Component, createMemo, createSignal } from "solid-js";
 import { useQuery } from "@triplit/solid";
 import Triangle from "./components/Triangle";
 import EntryList from "./components/EntryList";
@@ -33,24 +33,40 @@ const App: Component = () => {
 
   const glowColor = createMemo(() => averageColor(todayEntries()));
 
-  // Past 7 days (excluding today) for weekly averages
-  const weekQuery = client
+  const [selectedDay, setSelectedDay] = createSignal<string | null>(null);
+
+  // Past 28 days (excluding today) for weekly averages + day comparison
+  const pastQuery = client
     .query("entries")
-    .Where("created_at", ">=", daysAgo(7))
+    .Where("created_at", ">=", daysAgo(28))
     .Where("created_at", "<", startOfToday());
-  const { results: weekResults } = useQuery(client, weekQuery);
+  const { results: pastResults } = useQuery(client, pastQuery);
+
+  interface PastEntry extends Barycentric {
+    created_at: Date | string;
+  }
+
+  const pastByDay = createMemo(() => {
+    const map = new Map<string, PastEntry[]>();
+    for (const e of pastResults()?.values() ?? []) {
+      const key = dateKey(new Date(e.created_at));
+      const arr = map.get(key) ?? [];
+      arr.push({
+        good: e.good,
+        bad: e.bad,
+        naivete: e.naivete,
+        created_at: e.created_at,
+      });
+      map.set(key, arr);
+    }
+    return map;
+  });
 
   const weeklyAverages = createMemo(() => {
-    const entries = [...(weekResults()?.values() ?? [])];
-    const byDay = new Map<string, Barycentric[]>();
-    for (const e of entries) {
-      const key = dateKey(new Date(e.created_at));
-      const arr = byDay.get(key) ?? [];
-      arr.push({ good: e.good, bad: e.bad, naivete: e.naivete });
-      byDay.set(key, arr);
-    }
     const avgs: Barycentric[] = [];
-    for (const dayEntries of byDay.values()) {
+    const sevenDaysAgo = daysAgo(7);
+    for (const [key, dayEntries] of pastByDay()) {
+      if (new Date(key + "T00:00:00") < sevenDaysAgo) continue;
       const sum = { good: 0, bad: 0, naivete: 0 };
       for (const e of dayEntries) {
         sum.good += e.good;
@@ -66,6 +82,24 @@ const App: Component = () => {
     return avgs;
   });
 
+  // Entries for selected calendar day
+  const selectedDayEntries = createMemo(() => {
+    const day = selectedDay();
+    if (!day) return undefined;
+    return pastByDay().get(day);
+  });
+
+  const selectedDayLabel = createMemo(() => {
+    const day = selectedDay();
+    if (!day) return undefined;
+    const d = new Date(day + "T00:00:00");
+    return d.toLocaleDateString(undefined, {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    });
+  });
+
   return (
     <div class="min-h-screen bg-gray-950 flex flex-col items-center px-3 py-3 gap-2">
       <h1 class="text-base font-semibold text-gray-200">Triffect</h1>
@@ -78,9 +112,15 @@ const App: Component = () => {
 
       <p class="text-[10px] text-gray-600">Tap to log mood</p>
 
-      <EntryList />
+      <EntryList
+        entries={selectedDayEntries() ?? undefined}
+        label={selectedDayLabel() ?? undefined}
+      />
 
-      <Calendar />
+      <Calendar
+        selectedDay={selectedDay() ?? undefined}
+        onDaySelect={setSelectedDay}
+      />
 
       <footer class="text-center mt-3 max-w-xs px-1 space-y-1">
         <p class="text-[11px] text-gray-600 leading-snug">

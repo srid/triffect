@@ -1,4 +1,4 @@
-import { Component, For, createMemo } from "solid-js";
+import { type Component, For, createMemo } from "solid-js";
 import { useQuery } from "@triplit/solid";
 import { client } from "../lib/triplit";
 import MoodDot from "./MoodDot";
@@ -19,13 +19,18 @@ function daysAgo(n: number): Date {
 
 const DAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
 
-const Calendar: Component = () => {
+interface Props {
+  selectedDay?: string;
+  onDaySelect?: (dayKey: string | null) => void;
+}
+
+const Calendar: Component<Props> = (props) => {
   const since = daysAgo(DAYS - 1);
   const query = client
     .query("entries")
     .Where("created_at", ">=", since)
     .Order("created_at", "ASC");
-  const { results, fetchingLocal } = useQuery(client, query);
+  const { results } = useQuery(client, query);
 
   // Group entries by day → average barycentric color + count
   const dayMap = createMemo(() => {
@@ -57,9 +62,7 @@ const Calendar: Component = () => {
   const grid = createMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    // Monday = 0, Sunday = 6
     const todayCol = today.getDay() === 0 ? 6 : today.getDay() - 1;
-    // Go back to fill exactly 4 rows: 3 full weeks + current partial week up to today
     const totalDays = 3 * 7 + todayCol + 1;
     const days: { key: string; dayOfMonth: number }[] = [];
     for (let i = totalDays - 1; i >= 0; i--) {
@@ -69,7 +72,7 @@ const Calendar: Component = () => {
     return days;
   });
 
-  const isToday = (key: string) => key === startOfDay(new Date());
+  const todayKey = startOfDay(new Date());
 
   // Streak: consecutive days with ≥1 entry, counting back from today
   const streak = createMemo(() => {
@@ -83,6 +86,17 @@ const Calendar: Component = () => {
     }
     return count;
   });
+
+  function handleDayClick(dayKey: string) {
+    if (!props.onDaySelect) return;
+    if (!dayMap().has(dayKey)) return;
+    // Toggle: deselect if already selected, or if it's today
+    if (props.selectedDay === dayKey || dayKey === todayKey) {
+      props.onDaySelect(null);
+    } else {
+      props.onDaySelect(dayKey);
+    }
+  }
 
   return (
     <div class="w-full max-w-xs px-1">
@@ -122,14 +136,17 @@ const Calendar: Component = () => {
                 },
               ];
             };
+            const isSelected = () => props.selectedDay === day.key;
 
             return (
               <div
-                class="aspect-square rounded flex items-center justify-center relative"
+                class="aspect-square rounded flex items-center justify-center relative cursor-pointer"
                 classList={{
-                  "bg-gray-900": !isToday(day.key),
-                  "bg-gray-800 ring-1 ring-gray-600": isToday(day.key),
+                  "bg-gray-900": day.key !== todayKey && !isSelected(),
+                  "bg-gray-800 ring-1 ring-gray-600": day.key === todayKey,
+                  "bg-gray-800 ring-1 ring-gray-400": isSelected(),
                 }}
+                onClick={() => handleDayClick(day.key)}
               >
                 {agg() ? (
                   <MoodDot entries={dayEntries()} size={dotSize()} />

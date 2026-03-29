@@ -251,8 +251,8 @@ const Triangle: Component<Props> = (props) => {
           <polyline
             points={trailPath()}
             fill="none"
-            stroke="rgba(255,255,255,0.25)"
-            stroke-width="2"
+            stroke="rgba(255,255,255,0.08)"
+            stroke-width="1"
             stroke-linejoin="round"
           />
         </Show>
@@ -260,14 +260,7 @@ const Triangle: Component<Props> = (props) => {
         {/* Trail: dots at each entry position */}
         <For each={trailPoints()}>
           {(pt) => (
-            <circle
-              cx={pt.pixel.x}
-              cy={pt.pixel.y}
-              r="8"
-              fill={pt.color}
-              stroke="rgba(0,0,0,0.3)"
-              stroke-width="1.5"
-            />
+            <circle cx={pt.pixel.x} cy={pt.pixel.y} r="5" fill={pt.color} />
           )}
         </For>
 
