@@ -122,6 +122,22 @@ const App: Component = () => {
         onDaySelect={setSelectedDay}
       />
 
+      <button
+        class="text-[10px] text-gray-600 hover:text-red-400 mt-6 transition-colors"
+        onClick={async () => {
+          const cutoff = new Date(Date.now() - 5 * 60 * 1000);
+          const recent = client
+            .query("entries")
+            .Where("created_at", ">=", cutoff);
+          const results = await client.fetch(recent);
+          for (const entry of results.values()) {
+            await client.delete("entries", entry.id);
+          }
+        }}
+      >
+        Clear last 5 min
+      </button>
+
       <footer class="text-center mt-3 max-w-xs px-1 space-y-1">
         <p class="text-[11px] text-gray-600 leading-snug">
           <b class="text-green-600">Sensuous</b> — felicitous and innocuous
