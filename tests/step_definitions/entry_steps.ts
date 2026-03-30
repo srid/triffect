@@ -47,10 +47,11 @@ Then(
   async function (this: TriggityWorld, expected: number) {
     const dotsAfter = await this.trailDotCount();
     const added = dotsAfter - dotsBefore;
+    const entries = await this.entryCount();
     assert.strictEqual(
       added,
       expected,
-      `Expected ${expected} new dot, got ${added} (before=${dotsBefore}, after=${dotsAfter})`,
+      `Expected ${expected} new dot, got ${added} (before=${dotsBefore}, after=${dotsAfter}, idb_entries=${entries})`,
     );
   },
 );
