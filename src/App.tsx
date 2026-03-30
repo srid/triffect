@@ -6,7 +6,7 @@ import Calendar from "./components/Calendar";
 import TimePatterns from "./components/TimePatterns";
 import { client } from "./lib/triplit";
 import { averageColor, type Barycentric } from "./lib/coords";
-import { exportEntries, importEntries } from "./lib/exportImport";
+import { exportEntries, promptImport } from "./lib/exportImport";
 
 function startOfToday(): Date {
   const d = new Date();
@@ -155,23 +155,17 @@ const App: Component = () => {
         </button>
         <button
           class="text-[10px] text-gray-600 hover:text-gray-400 transition-colors"
-          onClick={() => {
-            const input = document.createElement("input");
-            input.type = "file";
-            input.accept = ".json";
-            input.onchange = async () => {
-              const file = input.files?.[0];
-              if (!file) return;
-              try {
-                const { imported, skipped } = await importEntries(client, file);
+          onClick={async () => {
+            try {
+              const result = await promptImport(client);
+              if (result) {
                 alert(
-                  `Imported ${imported} entries, skipped ${skipped} duplicates.`,
+                  `Imported ${result.imported} entries, skipped ${result.skipped} duplicates.`,
                 );
-              } catch (e) {
-                alert(`Import failed: ${e instanceof Error ? e.message : e}`);
               }
-            };
-            input.click();
+            } catch (e) {
+              alert(`Import failed: ${e instanceof Error ? e.message : e}`);
+            }
           }}
         >
           Import data

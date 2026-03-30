@@ -10,14 +10,14 @@ let importFilePath: string;
 let importedIds: string[];
 
 function makeEntries(count: number) {
-  const now = new Date();
+  const now = Date.now();
   return Array.from({ length: count }, (_, i) => ({
-    id: `test-import-${Date.now()}-${i}`,
+    id: `test-import-${now}-${i}`,
     good: 0.33,
     bad: 0.33,
     naivete: 0.34,
     note: null,
-    created_at: new Date(now.getTime() - i * 1000).toISOString(),
+    created_at: new Date(now - i * 60_000).toISOString(),
   }));
 }
 
@@ -77,41 +77,28 @@ Then(
   },
 );
 
+async function triggerImport(world: TriggityWorld, filePath: string) {
+  world.page.once("dialog", (dialog) => dialog.accept());
+  const [fileChooser] = await Promise.all([
+    world.page.waitForEvent("filechooser"),
+    world.page.locator("button", { hasText: "Import data" }).click(),
+  ]);
+  await fileChooser.setFiles(filePath);
+  await world.page.waitForTimeout(1000);
+}
+
 When(
   "I import a JSON file with {int} entries",
   async function (this: TriggityWorld, count: number) {
     const entries = makeEntries(count);
-    const now = new Date();
-    for (const e of entries) {
-      e.created_at = new Date(
-        now.getTime() - Math.random() * 60000,
-      ).toISOString();
-    }
     importedIds = entries.map((e) => e.id);
     importFilePath = writeImportFile(entries);
-
-    this.page.once("dialog", (dialog) => dialog.accept());
-
-    const [fileChooser] = await Promise.all([
-      this.page.waitForEvent("filechooser"),
-      this.page.locator("button", { hasText: "Import data" }).click(),
-    ]);
-    await fileChooser.setFiles(importFilePath);
-
-    await this.page.waitForTimeout(1000);
+    await triggerImport(this, importFilePath);
   },
 );
 
 When("I import the same JSON file again", async function (this: TriggityWorld) {
-  this.page.once("dialog", (dialog) => dialog.accept());
-
-  const [fileChooser] = await Promise.all([
-    this.page.waitForEvent("filechooser"),
-    this.page.locator("button", { hasText: "Import data" }).click(),
-  ]);
-  await fileChooser.setFiles(importFilePath);
-
-  await this.page.waitForTimeout(1000);
+  await triggerImport(this, importFilePath);
 });
 
 Then(

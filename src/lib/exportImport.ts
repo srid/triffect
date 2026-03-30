@@ -4,7 +4,7 @@ import type { schema } from "../../triplit/schema";
 type Client = TriplitClient<typeof schema>;
 
 interface ExportEnvelope {
-  version: 1;
+  version: number;
   exportedAt: string;
   entries: {
     id: string;
@@ -16,16 +16,28 @@ interface ExportEnvelope {
   }[];
 }
 
+function downloadJson(json: string, filename: string) {
+  const blob = new Blob([json], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export async function exportEntries(client: Client): Promise<void> {
   const all = await client.fetch(client.query("entries"));
-  const entries = [...all.values()].map((e) => ({
-    id: e.id,
-    good: e.good,
-    bad: e.bad,
-    naivete: e.naivete,
-    note: e.note ?? null,
-    created_at: new Date(e.created_at).toISOString(),
-  }));
+  const entries = [...all.values()].map(
+    ({ id, good, bad, naivete, note, created_at }) => ({
+      id,
+      good,
+      bad,
+      naivete,
+      note: note ?? null,
+      created_at: new Date(created_at).toISOString(),
+    }),
+  );
 
   const envelope: ExportEnvelope = {
     version: 1,
@@ -33,23 +45,15 @@ export async function exportEntries(client: Client): Promise<void> {
     entries,
   };
 
-  const json = JSON.stringify(envelope, null, 2);
-  const blob = new Blob([json], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
   const date = new Date().toISOString().slice(0, 10);
-  a.href = url;
-  a.download = `triffect-${date}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
+  downloadJson(JSON.stringify(envelope, null, 2), `triffect-${date}.json`);
 }
 
 export async function importEntries(
   client: Client,
   file: File,
 ): Promise<{ imported: number; skipped: number }> {
-  const text = await file.text();
-  const data = JSON.parse(text) as ExportEnvelope;
+  const data = JSON.parse(await file.text()) as ExportEnvelope;
 
   if (!data.version || !Array.isArray(data.entries)) {
     throw new Error("Invalid export file format");
@@ -61,21 +65,39 @@ export async function importEntries(
   let imported = 0;
   let skipped = 0;
 
-  for (const entry of data.entries) {
-    if (existingIds.has(entry.id)) {
+  for (const { id, good, bad, naivete, note, created_at } of data.entries) {
+    if (existingIds.has(id)) {
       skipped++;
       continue;
     }
     await client.insert("entries", {
-      id: entry.id,
-      good: entry.good,
-      bad: entry.bad,
-      naivete: entry.naivete,
-      ...(entry.note != null ? { note: entry.note } : {}),
-      created_at: new Date(entry.created_at),
+      id,
+      good,
+      bad,
+      naivete,
+      ...(note != null ? { note } : {}),
+      created_at: new Date(created_at),
     });
     imported++;
   }
 
   return { imported, skipped };
+}
+
+/** Prompt user to pick a JSON file and import it. Returns null if cancelled. */
+export async function promptImport(
+  client: Client,
+): Promise<{ imported: number; skipped: number } | null> {
+  const file = await pickFile(".json");
+  return file ? importEntries(client, file) : null;
+}
+
+function pickFile(accept: string): Promise<File | null> {
+  return new Promise((resolve) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = accept;
+    input.onchange = () => resolve(input.files?.[0] ?? null);
+    input.click();
+  });
 }
