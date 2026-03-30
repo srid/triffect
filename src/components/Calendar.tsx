@@ -32,17 +32,6 @@ const Calendar: Component<Props> = (props) => {
     .Order("created_at", "ASC");
   const { results } = useQuery(client, query);
 
-  // Day notes for indicator
-  const notesQuery = client.query("day_notes");
-  const { results: notesResults } = useQuery(client, notesQuery);
-  const daysWithNotes = createMemo(() => {
-    const set = new Set<string>();
-    for (const note of notesResults()?.values() ?? []) {
-      if (note.note.trim()) set.add(note.id);
-    }
-    return set;
-  });
-
   // Group entries by day → average barycentric color + count
   const dayMap = createMemo(() => {
     const map = new Map<
@@ -100,6 +89,7 @@ const Calendar: Component<Props> = (props) => {
 
   function handleDayClick(dayKey: string) {
     if (!props.onDaySelect) return;
+    if (!dayMap().has(dayKey)) return;
     // Toggle: deselect if already selected, or if it's today
     if (props.selectedDay === dayKey || dayKey === todayKey) {
       props.onDaySelect(null);
@@ -148,8 +138,6 @@ const Calendar: Component<Props> = (props) => {
             };
             const isSelected = () => props.selectedDay === day.key;
 
-            const hasNote = () => daysWithNotes().has(day.key);
-
             return (
               <div
                 class="aspect-square rounded flex items-center justify-center relative cursor-pointer"
@@ -164,9 +152,6 @@ const Calendar: Component<Props> = (props) => {
                   <MoodDot entries={dayEntries()} size={dotSize()} />
                 ) : (
                   <span class="text-[9px] text-gray-700">{day.dayOfMonth}</span>
-                )}
-                {hasNote() && (
-                  <span class="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-gray-500" />
                 )}
               </div>
             );

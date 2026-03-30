@@ -13,10 +13,6 @@ interface ExportEnvelope {
     naivete: number;
     created_at: string;
   }[];
-  day_notes?: {
-    id: string;
-    note: string;
-  }[];
 }
 
 function downloadJson(json: string, filename: string) {
@@ -41,17 +37,10 @@ export async function exportEntries(client: Client): Promise<void> {
     }),
   );
 
-  const allNotes = await client.fetch(client.query("day_notes"));
-  const day_notes = [...allNotes.values()].map(({ id, note }) => ({
-    id,
-    note,
-  }));
-
   const envelope: ExportEnvelope = {
     version: 1,
     exportedAt: new Date().toISOString(),
     entries,
-    day_notes,
   };
 
   const date = new Date().toISOString().slice(0, 10);
@@ -87,24 +76,6 @@ export async function importEntries(
       created_at: new Date(created_at),
     });
     imported++;
-  }
-
-  // Import day_notes
-  if (Array.isArray(data.day_notes)) {
-    const existingNotes = await client.fetch(client.query("day_notes"));
-    const existingNoteIds = new Set(
-      [...existingNotes.values()].map((n) => n.id),
-    );
-    for (const { id, note } of data.day_notes) {
-      if (existingNoteIds.has(id)) {
-        // Overwrite with imported note
-        await client.update("day_notes", id, (n) => {
-          n.note = note;
-        });
-      } else {
-        await client.insert("day_notes", { id, note });
-      }
-    }
   }
 
   return { imported, skipped };
