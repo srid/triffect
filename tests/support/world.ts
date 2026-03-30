@@ -20,19 +20,16 @@ export class TriggityWorld extends World {
 
   /** Click inside the triangle at a relative position (0-1 for x and y within the container). */
   async clickTriangle(relX: number, relY: number) {
-    const el = this.page.locator("div.cursor-crosshair");
-    const box = await el.boundingBox();
-    if (!box) throw new Error("Triangle not found");
-    await el.click({
+    const canvas = this.page.locator("div.cursor-crosshair canvas");
+    const box = await canvas.boundingBox();
+    if (!box) throw new Error("Triangle canvas not found");
+    await canvas.click({
       position: { x: box.width * relX, y: box.height * relY },
     });
   }
 
   /** Tap inside the triangle in a touch-enabled context (simulates mobile). */
   async touchTriangle(relX: number, relY: number) {
-    // The app uses onClick only — on real phones, a touch synthesizes a
-    // single click. Playwright's tap() can double-fire, so use click()
-    // in the hasTouch context to match real mobile behavior.
     await this.clickTriangle(relX, relY);
   }
 
