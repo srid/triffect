@@ -33,10 +33,9 @@ export class TriggityWorld extends World {
     await this.clickTriangle(relX, relY);
   }
 
-  /** Count trail dots on the triangle SVG. */
+  /** Count trail dots on the triangle SVG (not EntryList dots). */
   async trailDotCount(): Promise<number> {
-    // Trail dots are circles with r="5" and a fill color (not white, not animation rings)
-    return this.page.locator('svg circle[r="5"]').count();
+    return this.page.locator('div.cursor-crosshair svg circle[r="5"]').count();
   }
 
   /** Count entries via IndexedDB. */

@@ -34,33 +34,8 @@ Given("I open the app on mobile", async function (this: TriggityWorld) {
 When(
   "I touch the center of the triangle",
   async function (this: TriggityWorld) {
-    // Capture console logs to trace click handler invocations
-    const logs: string[] = [];
-    this.page.on("console", (msg) => logs.push(msg.text()));
-
-    // Inject a click counter on the canvas before touching
-    await this.page.evaluate(() => {
-      const canvas = document.querySelector(
-        "div.cursor-crosshair canvas",
-      ) as HTMLElement;
-      let clickCount = 0;
-      canvas.addEventListener(
-        "click",
-        (e) => {
-          clickCount++;
-          console.log(
-            `[test] canvas click #${clickCount}: clientX=${e.clientX} clientY=${e.clientY} target=${(e.target as Element)?.tagName}`,
-          );
-        },
-        true,
-      );
-    });
-
     await this.touchTriangle(0.5, 0.5);
     await this.page.waitForTimeout(1000);
-
-    // Store logs for assertion step
-    (this as any)._clickLogs = logs;
   },
 );
 
@@ -68,29 +43,10 @@ Then(
   "exactly {int} new trail dot should appear",
   async function (this: TriggityWorld, expected: number) {
     const dots = await this.trailDotCount();
-    const logs = ((this as any)._clickLogs as string[]) ?? [];
-    const clickLogs = logs.filter((l) => l.includes("[test] canvas click"));
-
-    // Debug: check how many SVGs exist and where the circles are
-    const svgCount = await this.page.locator("svg").count();
-    const positions = await this.page.evaluate(() => {
-      const circles = document.querySelectorAll('circle[r="5"]');
-      return Array.from(circles).map((c) => {
-        const svg = c.closest("svg");
-        const parent = c.parentElement;
-        return {
-          cx: c.getAttribute("cx"),
-          cy: c.getAttribute("cy"),
-          svgId: svg?.id ?? "no-id",
-          parentTag: parent?.tagName,
-        };
-      });
-    });
-
     assert.strictEqual(
       dots,
       expected,
-      `Expected ${expected} trail dot, got ${dots} (clicks=${clickLogs.length}, svgs=${svgCount}, positions=${JSON.stringify(positions)})`,
+      `Expected ${expected} trail dot, got ${dots}`,
     );
   },
 );
