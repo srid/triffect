@@ -9,4 +9,4 @@ Feature: Affect entry logging
   Scenario: Mobile touch creates exactly one entry
     Given I open the app on mobile
     When I touch the center of the triangle
-    Then exactly 1 entry should exist
+    Then exactly 1 new trail dot should appear
