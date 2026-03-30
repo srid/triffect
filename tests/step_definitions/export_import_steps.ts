@@ -7,6 +7,7 @@ import { TriggityWorld } from "../support/world.ts";
 
 let downloadedJson: any;
 let importFilePath: string;
+let dotsBefore: number;
 
 function makeEntries(count: number) {
   const now = new Date();
@@ -79,8 +80,10 @@ Then(
 When(
   "I import a JSON file with {int} entries",
   async function (this: TriggityWorld, count: number) {
+    // Record dot count before import to measure delta
+    dotsBefore = await this.trailDotCount();
+
     const entries = makeEntries(count);
-    // Set created_at to today so they appear as today's entries
     const now = new Date();
     for (const e of entries) {
       e.created_at = new Date(
@@ -89,23 +92,22 @@ When(
     }
     importFilePath = writeImportFile(entries);
 
-    // Listen for dialog (the alert after import)
-    this.page.on("dialog", (dialog) => dialog.accept());
+    this.page.once("dialog", (dialog) => dialog.accept());
 
-    // Set file on the hidden input that gets created when "Import data" is clicked
     const [fileChooser] = await Promise.all([
       this.page.waitForEvent("filechooser"),
       this.page.locator("button", { hasText: "Import data" }).click(),
     ]);
     await fileChooser.setFiles(importFilePath);
 
-    // Wait for import to complete
     await this.page.waitForTimeout(1000);
   },
 );
 
 When("I import the same JSON file again", async function (this: TriggityWorld) {
-  this.page.on("dialog", (dialog) => dialog.accept());
+  dotsBefore = await this.trailDotCount();
+
+  this.page.once("dialog", (dialog) => dialog.accept());
 
   const [fileChooser] = await Promise.all([
     this.page.waitForEvent("filechooser"),
@@ -124,6 +126,19 @@ Then(
       count,
       expected,
       `Expected ${expected} trail dots, got ${count}`,
+    );
+  },
+);
+
+Then(
+  "the import should add {int} new trail dots",
+  async function (this: TriggityWorld, expected: number) {
+    const dotsAfter = await this.trailDotCount();
+    const added = dotsAfter - dotsBefore;
+    assert.strictEqual(
+      added,
+      expected,
+      `Expected ${expected} new trail dots, got ${added} (before=${dotsBefore}, after=${dotsAfter})`,
     );
   },
 );
