@@ -7,7 +7,7 @@ import { TriggityWorld } from "../support/world.ts";
 
 let downloadedJson: any;
 let importFilePath: string;
-let dotsBefore: number;
+let importedIds: string[];
 
 function makeEntries(count: number) {
   const now = new Date();
@@ -80,9 +80,6 @@ Then(
 When(
   "I import a JSON file with {int} entries",
   async function (this: TriggityWorld, count: number) {
-    // Record dot count before import to measure delta
-    dotsBefore = await this.trailDotCount();
-
     const entries = makeEntries(count);
     const now = new Date();
     for (const e of entries) {
@@ -90,6 +87,7 @@ When(
         now.getTime() - Math.random() * 60000,
       ).toISOString();
     }
+    importedIds = entries.map((e) => e.id);
     importFilePath = writeImportFile(entries);
 
     this.page.once("dialog", (dialog) => dialog.accept());
@@ -105,8 +103,6 @@ When(
 );
 
 When("I import the same JSON file again", async function (this: TriggityWorld) {
-  dotsBefore = await this.trailDotCount();
-
   this.page.once("dialog", (dialog) => dialog.accept());
 
   const [fileChooser] = await Promise.all([
@@ -119,26 +115,20 @@ When("I import the same JSON file again", async function (this: TriggityWorld) {
 });
 
 Then(
-  "{int} trail dots should be visible",
+  "the downloaded JSON should contain the {int} imported entries",
   async function (this: TriggityWorld, expected: number) {
-    const count = await this.trailDotCount();
-    assert.strictEqual(
-      count,
-      expected,
-      `Expected ${expected} trail dots, got ${count}`,
+    assert.ok(downloadedJson, "No JSON was downloaded");
+    assert.ok(
+      Array.isArray(downloadedJson.entries),
+      "entries should be an array",
     );
-  },
-);
-
-Then(
-  "the import should add {int} new trail dots",
-  async function (this: TriggityWorld, expected: number) {
-    const dotsAfter = await this.trailDotCount();
-    const added = dotsAfter - dotsBefore;
+    const found = downloadedJson.entries.filter((e: any) =>
+      importedIds.includes(e.id),
+    );
     assert.strictEqual(
-      added,
+      found.length,
       expected,
-      `Expected ${expected} new trail dots, got ${added} (before=${dotsBefore}, after=${dotsAfter})`,
+      `Expected ${expected} imported entries in export, found ${found.length} (total entries: ${downloadedJson.entries.length})`,
     );
   },
 );
