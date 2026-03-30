@@ -47,11 +47,18 @@ Then(
   async function (this: TriggityWorld, expected: number) {
     const dotsAfter = await this.trailDotCount();
     const added = dotsAfter - dotsBefore;
-    const entries = await this.entryCount();
+
+    // Count actual entry circles (r="5") and all circles for debugging
+    const allCircles = await this.page.locator("svg circle").count();
+    const r5Circles = await this.page.locator('svg circle[r="5"]').count();
+    const r6Circles = await this.page.locator('svg circle[r="6"]').count();
+    const r8Circles = await this.page.locator('svg circle[r="8"]').count();
+    const r12Circles = await this.page.locator('svg circle[r="12"]').count();
+
     assert.strictEqual(
       added,
       expected,
-      `Expected ${expected} new dot, got ${added} (before=${dotsBefore}, after=${dotsAfter}, idb_entries=${entries})`,
+      `Expected ${expected} new dot, got ${added} (before=${dotsBefore}, after=${dotsAfter}, circles: r5=${r5Circles} r6=${r6Circles} r8=${r8Circles} r12=${r12Circles} total=${allCircles})`,
     );
   },
 );
