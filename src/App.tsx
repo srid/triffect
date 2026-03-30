@@ -6,6 +6,7 @@ import Calendar from "./components/Calendar";
 import TimePatterns from "./components/TimePatterns";
 import { client } from "./lib/triplit";
 import { averageColor, type Barycentric } from "./lib/coords";
+import { exportEntries, importEntries } from "./lib/exportImport";
 
 function startOfToday(): Date {
   const d = new Date();
@@ -144,6 +145,38 @@ const App: Component = () => {
       >
         Clear last 5 min
       </button>
+
+      <div class="flex gap-4 mt-2">
+        <button
+          class="text-[10px] text-gray-600 hover:text-gray-400 transition-colors"
+          onClick={() => exportEntries(client)}
+        >
+          Export data
+        </button>
+        <button
+          class="text-[10px] text-gray-600 hover:text-gray-400 transition-colors"
+          onClick={() => {
+            const input = document.createElement("input");
+            input.type = "file";
+            input.accept = ".json";
+            input.onchange = async () => {
+              const file = input.files?.[0];
+              if (!file) return;
+              try {
+                const { imported, skipped } = await importEntries(client, file);
+                alert(
+                  `Imported ${imported} entries, skipped ${skipped} duplicates.`,
+                );
+              } catch (e) {
+                alert(`Import failed: ${e instanceof Error ? e.message : e}`);
+              }
+            };
+            input.click();
+          }}
+        >
+          Import data
+        </button>
+      </div>
 
       <footer class="text-center mt-3 max-w-xs px-1 space-y-1">
         <p class="text-[11px] text-gray-600 leading-snug">
