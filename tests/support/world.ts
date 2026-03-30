@@ -30,14 +30,7 @@ export class TriggityWorld extends World {
 
   /** Tap inside the triangle in a touch-enabled context (simulates mobile). */
   async touchTriangle(relX: number, relY: number) {
-    // In hasTouch contexts, Playwright's click() dispatches touch + click,
-    // which can double-fire the handler. Use dispatchEvent for a single click.
-    const canvas = this.page.locator("div.cursor-crosshair canvas");
-    const box = await canvas.boundingBox();
-    if (!box) throw new Error("Triangle canvas not found");
-    const x = box.x + box.width * relX;
-    const y = box.y + box.height * relY;
-    await canvas.dispatchEvent("click", { clientX: x, clientY: y });
+    await this.clickTriangle(relX, relY);
   }
 
   /** Count trail dots on the triangle SVG. */

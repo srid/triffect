@@ -2,8 +2,6 @@ import { Given, When, Then } from "@cucumber/cucumber";
 import assert from "node:assert";
 import { TriggityWorld } from "../support/world.ts";
 
-let dotsBefore = 0;
-
 When("I tap the center of the triangle", async function (this: TriggityWorld) {
   await this.clickTriangle(0.5, 0.5);
   await this.page.waitForTimeout(500);
@@ -36,32 +34,46 @@ Given("I open the app on mobile", async function (this: TriggityWorld) {
 When(
   "I touch the center of the triangle",
   async function (this: TriggityWorld) {
-    dotsBefore = await this.trailDotCount();
+    // Capture console logs to trace click handler invocations
+    const logs: string[] = [];
+    this.page.on("console", (msg) => logs.push(msg.text()));
+
+    // Inject a click counter on the canvas before touching
+    await this.page.evaluate(() => {
+      const canvas = document.querySelector(
+        "div.cursor-crosshair canvas",
+      ) as HTMLElement;
+      let clickCount = 0;
+      canvas.addEventListener(
+        "click",
+        (e) => {
+          clickCount++;
+          console.log(
+            `[test] canvas click #${clickCount}: clientX=${e.clientX} clientY=${e.clientY} target=${(e.target as Element)?.tagName}`,
+          );
+        },
+        true,
+      );
+    });
+
     await this.touchTriangle(0.5, 0.5);
     await this.page.waitForTimeout(1000);
+
+    // Store logs for assertion step
+    (this as any)._clickLogs = logs;
   },
 );
 
 Then(
   "exactly {int} new trail dot should appear",
   async function (this: TriggityWorld, expected: number) {
-    const dotsAfter = await this.trailDotCount();
-    const added = dotsAfter - dotsBefore;
-
-    // Debug: get positions of all r=5 circles
-    const positions = await this.page.evaluate(() => {
-      const circles = document.querySelectorAll('svg circle[r="5"]');
-      return Array.from(circles).map((c) => ({
-        cx: c.getAttribute("cx"),
-        cy: c.getAttribute("cy"),
-        fill: c.getAttribute("fill"),
-      }));
-    });
-
+    const dots = await this.trailDotCount();
+    const logs = ((this as any)._clickLogs as string[]) ?? [];
+    const clickLogs = logs.filter((l) => l.includes("[test] canvas click"));
     assert.strictEqual(
-      added,
+      dots,
       expected,
-      `Expected ${expected} new dot, got ${added} (before=${dotsBefore}, after=${dotsAfter}, dots=${JSON.stringify(positions)})`,
+      `Expected ${expected} trail dot, got ${dots} (click events: ${clickLogs.length}, logs: ${clickLogs.join(" | ")})`,
     );
   },
 );
