@@ -49,20 +49,27 @@ const DayNote: Component<Props> = (props) => {
     return unsub;
   });
 
+  let saving = false;
   async function save() {
-    const text = draft().trim();
-    const hadNote = savedNote().length > 0;
+    if (saving) return;
+    saving = true;
+    try {
+      const text = draft().trim();
+      const hadNote = savedNote().length > 0;
 
-    if (text.length === 0 && hadNote) {
-      await client.delete("day_notes", props.dayKey);
-    } else if (text.length > 0 && hadNote) {
-      await client.update("day_notes", props.dayKey, (n) => {
-        n.note = text;
-      });
-    } else if (text.length > 0) {
-      await client.insert("day_notes", { id: props.dayKey, note: text });
+      if (text.length === 0 && hadNote) {
+        await client.delete("day_notes", props.dayKey);
+      } else if (text.length > 0 && hadNote) {
+        await client.update("day_notes", props.dayKey, (n) => {
+          n.note = text;
+        });
+      } else if (text.length > 0) {
+        await client.insert("day_notes", { id: props.dayKey, note: text });
+      }
+      setEditing(false);
+    } finally {
+      saving = false;
     }
-    setEditing(false);
   }
 
   return (

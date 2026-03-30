@@ -120,12 +120,12 @@ const App: Component = () => {
         label={selectedDayLabel() ?? undefined}
       />
 
-      <DayNote dayKey={selectedDay() ?? dateKey(new Date())} />
-
       <Calendar
         selectedDay={selectedDay() ?? undefined}
         onDaySelect={setSelectedDay}
       />
+
+      <DayNote dayKey={selectedDay() ?? dateKey(new Date())} />
 
       <TimePatterns />
 
