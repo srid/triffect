@@ -9,50 +9,30 @@ const DayNote: Component<Props> = (props) => {
   const [editing, setEditing] = createSignal(false);
   const [draft, setDraft] = createSignal("");
   const [savedNote, setSavedNote] = createSignal("");
+  const [error, setError] = createSignal("");
 
-  // Fetch note reactively when dayKey changes
+  async function fetchNote(key: string) {
+    try {
+      const r = await client.fetchById("day_notes", key);
+      const note = r?.note ?? "";
+      setSavedNote(note);
+      setDraft(note);
+    } catch {
+      setSavedNote("");
+      setDraft("");
+    }
+  }
+
+  // Fetch note when dayKey changes
   createEffect(() => {
     const key = props.dayKey;
     setEditing(false);
-    client
-      .fetchById("day_notes", key)
-      .then((r) => {
-        const note = r?.note ?? "";
-        setSavedNote(note);
-        setDraft(note);
-      })
-      .catch(() => {
-        setSavedNote("");
-        setDraft("");
-      });
+    setError("");
+    fetchNote(key);
   });
 
-  // Also subscribe to live updates
-  createEffect(() => {
-    const key = props.dayKey;
-    const unsub = client.subscribe(
-      client.query("day_notes").Where("id", "=", key),
-      (results: unknown) => {
-        let note = "";
-        if (results instanceof Map) {
-          note = results.get(key)?.note ?? "";
-        } else if (Array.isArray(results)) {
-          note =
-            (results as { id: string; note: string }[]).find(
-              (r) => r.id === key,
-            )?.note ?? "";
-        }
-        setSavedNote(note);
-        if (!editing()) setDraft(note);
-      },
-    );
-    return unsub;
-  });
-
-  let saving = false;
   async function save() {
-    if (saving) return;
-    saving = true;
+    setError("");
     try {
       const text = draft().trim();
       const hadNote = savedNote().length > 0;
@@ -66,14 +46,19 @@ const DayNote: Component<Props> = (props) => {
       } else if (text.length > 0) {
         await client.insert("day_notes", { id: props.dayKey, note: text });
       }
+      // Re-fetch to confirm persistence
+      await fetchNote(props.dayKey);
       setEditing(false);
-    } finally {
-      saving = false;
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
     }
   }
 
   return (
     <div class="w-full max-w-xs px-1">
+      <Show when={error()}>
+        <p class="text-[10px] text-red-400 mb-1">{error()}</p>
+      </Show>
       <Show
         when={editing()}
         fallback={
