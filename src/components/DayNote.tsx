@@ -97,15 +97,14 @@ const DayNote: Component<Props> = (props) => {
           rows={3}
           value={draft()}
           onInput={(e) => setDraft(e.currentTarget.value)}
-          onBlur={() => save()}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              save();
-            }
-          }}
           ref={(el) => setTimeout(() => el.focus(), 0)}
         />
+        <button
+          class="mt-1 px-3 py-1 rounded bg-gray-800 text-gray-300 text-xs active:bg-gray-700"
+          onClick={() => save()}
+        >
+          Done
+        </button>
       </Show>
     </div>
   );
