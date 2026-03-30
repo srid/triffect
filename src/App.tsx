@@ -2,6 +2,7 @@ import { type Component, createMemo, createSignal } from "solid-js";
 import { useQuery } from "@triplit/solid";
 import Triangle from "./components/Triangle";
 import EntryList from "./components/EntryList";
+import DayNote from "./components/DayNote";
 import Calendar from "./components/Calendar";
 import TimePatterns from "./components/TimePatterns";
 import { client } from "./lib/triplit";
@@ -118,6 +119,8 @@ const App: Component = () => {
         entries={selectedDayEntries() ?? undefined}
         label={selectedDayLabel() ?? undefined}
       />
+
+      <DayNote dayKey={selectedDay() ?? dateKey(new Date())} />
 
       <Calendar
         selectedDay={selectedDay() ?? undefined}

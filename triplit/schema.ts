@@ -11,4 +11,10 @@ export const schema = {
       created_at: S.Date(),
     }),
   },
+  day_notes: {
+    schema: S.Schema({
+      id: S.Id(),
+      note: S.String(),
+    }),
+  },
 } satisfies ClientSchema;
