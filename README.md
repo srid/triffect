@@ -30,8 +30,27 @@ A 4-week heatmap with mini mood-triangles per day and a consecutive-day streak c
 
 A static build is deployed to GitHub Pages on every push to `master`. All data lives in your browser's IndexedDB via [Triplit](https://www.triplit.dev/) — nothing leaves the device. No server, no account, no sync.
 
-> [!IMPORTANT]
-> Clearing browser data deletes all entries. Export functionality is not yet implemented.
+### Export / Import
+
+Tap **Export data** at the bottom of the page to download all entries as a JSON file (`triffect-YYYY-MM-DD.json`). Tap **Import data** to restore entries from a previously exported file. Import is idempotent — duplicate entries (matched by ID) are skipped.
+
+The export format is a versioned envelope:
+
+```json
+{
+  "version": 1,
+  "exportedAt": "2026-03-30T10:15:00.000Z",
+  "entries": [
+    {
+      "id": "01JQXYZ1234567890ABCDEF",
+      "good": 0.33,
+      "bad": 0.33,
+      "naivete": 0.34,
+      "created_at": "2026-03-30T09:00:00.000Z"
+    }
+  ]
+}
+```
 
 ## Schema
 
@@ -43,7 +62,6 @@ Each entry stores a point in the triangle:
 | `good`       | number [0,1]  | Barycentric weight toward Good vertex    |
 | `bad`        | number [0,1]  | Barycentric weight toward Bad vertex     |
 | `naivete`    | number [0,1]  | Barycentric weight toward Naivete vertex |
-| `note`       | string (opt)  | Legacy field, no longer used in UI       |
 | `created_at` | date          | Timestamp of the entry                   |
 
 The three barycentric coordinates always sum to 1. A tap near the Naivete vertex produces high `naivete`, low `good` and `bad`.

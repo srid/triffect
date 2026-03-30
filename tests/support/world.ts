@@ -20,28 +20,22 @@ export class TriggityWorld extends World {
 
   /** Click inside the triangle at a relative position (0-1 for x and y within the container). */
   async clickTriangle(relX: number, relY: number) {
-    const el = this.page.locator("div.cursor-crosshair");
-    const box = await el.boundingBox();
-    if (!box) throw new Error("Triangle not found");
-    await el.click({
+    const canvas = this.page.locator("div.cursor-crosshair canvas");
+    const box = await canvas.boundingBox();
+    if (!box) throw new Error("Triangle canvas not found");
+    await canvas.click({
       position: { x: box.width * relX, y: box.height * relY },
     });
   }
 
-  /** Touch inside the triangle (simulates mobile touchstart). */
+  /** Tap inside the triangle in a touch-enabled context (simulates mobile). */
   async touchTriangle(relX: number, relY: number) {
-    const el = this.page.locator("div.cursor-crosshair");
-    const box = await el.boundingBox();
-    if (!box) throw new Error("Triangle not found");
-    await el.tap({
-      position: { x: box.width * relX, y: box.height * relY },
-    });
+    await this.clickTriangle(relX, relY);
   }
 
-  /** Count trail dots on the triangle SVG. */
+  /** Count trail dots on the triangle SVG (not EntryList dots). */
   async trailDotCount(): Promise<number> {
-    // Trail dots are circles with r="5" and a fill color (not white, not animation rings)
-    return this.page.locator('svg circle[r="5"]').count();
+    return this.page.locator('div.cursor-crosshair svg circle[r="5"]').count();
   }
 
   /** Count entries via IndexedDB. */

@@ -4,7 +4,6 @@ import { TriggityWorld } from "../support/world.ts";
 
 When("I tap the center of the triangle", async function (this: TriggityWorld) {
   await this.clickTriangle(0.5, 0.5);
-  // Wait for entry to be saved
   await this.page.waitForTimeout(500);
 });
 
@@ -17,7 +16,6 @@ Then(
 );
 
 Given("I open the app on mobile", async function (this: TriggityWorld) {
-  // Re-create context with touch support enabled
   const oldContext = this.context;
   this.context = await this.browser.newContext({
     viewport: { width: 390, height: 844 },
@@ -37,19 +35,18 @@ When(
   "I touch the center of the triangle",
   async function (this: TriggityWorld) {
     await this.touchTriangle(0.5, 0.5);
-    // Wait for entry to be saved
     await this.page.waitForTimeout(1000);
   },
 );
 
 Then(
-  "exactly {int} entry should exist",
+  "exactly {int} new trail dot should appear",
   async function (this: TriggityWorld, expected: number) {
     const dots = await this.trailDotCount();
     assert.strictEqual(
       dots,
       expected,
-      `Expected ${expected} entry, got ${dots}`,
+      `Expected ${expected} trail dot, got ${dots}`,
     );
   },
 );
