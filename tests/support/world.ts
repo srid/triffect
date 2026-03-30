@@ -28,14 +28,12 @@ export class TriggityWorld extends World {
     });
   }
 
-  /** Touch inside the triangle (simulates mobile touchstart). */
+  /** Tap inside the triangle in a touch-enabled context (simulates mobile). */
   async touchTriangle(relX: number, relY: number) {
-    const el = this.page.locator("div.cursor-crosshair");
-    const box = await el.boundingBox();
-    if (!box) throw new Error("Triangle not found");
-    await el.tap({
-      position: { x: box.width * relX, y: box.height * relY },
-    });
+    // The app uses onClick only — on real phones, a touch synthesizes a
+    // single click. Playwright's tap() can double-fire, so use click()
+    // in the hasTouch context to match real mobile behavior.
+    await this.clickTriangle(relX, relY);
   }
 
   /** Count trail dots on the triangle SVG. */
