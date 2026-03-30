@@ -10,6 +10,7 @@ const DayNote: Component<Props> = (props) => {
   const [draft, setDraft] = createSignal("");
   const [savedNote, setSavedNote] = createSignal("");
   const [error, setError] = createSignal("");
+  const [debug, setDebug] = createSignal("");
 
   async function fetchNote(key: string) {
     try {
@@ -36,21 +37,32 @@ const DayNote: Component<Props> = (props) => {
     try {
       const text = draft().trim();
       const hadNote = savedNote().length > 0;
+      setDebug(`save: text="${text}" hadNote=${hadNote} key=${props.dayKey}`);
 
       if (text.length === 0 && hadNote) {
         await client.delete("day_notes", props.dayKey);
+        setDebug((d) => d + " | deleted");
       } else if (text.length > 0 && hadNote) {
         await client.update("day_notes", props.dayKey, (n) => {
           n.note = text;
         });
+        setDebug((d) => d + " | updated");
       } else if (text.length > 0) {
         await client.insert("day_notes", { id: props.dayKey, note: text });
+        setDebug((d) => d + " | inserted");
+      } else {
+        setDebug((d) => d + " | no-op");
       }
       // Re-fetch to confirm persistence
-      await fetchNote(props.dayKey);
+      const after = await client.fetchById("day_notes", props.dayKey);
+      setDebug((d) => d + ` | fetch=${JSON.stringify(after)}`);
+      setSavedNote(after?.note ?? "");
+      setDraft(after?.note ?? "");
       setEditing(false);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      const msg = e instanceof Error ? e.message : String(e);
+      setError(msg);
+      setDebug((d) => d + ` | ERROR: ${msg}`);
     }
   }
 
@@ -58,6 +70,9 @@ const DayNote: Component<Props> = (props) => {
     <div class="w-full max-w-xs px-1">
       <Show when={error()}>
         <p class="text-[10px] text-red-400 mb-1">{error()}</p>
+      </Show>
+      <Show when={debug()}>
+        <p class="text-[10px] text-yellow-500 mb-1 break-all">{debug()}</p>
       </Show>
       <Show
         when={editing()}
