@@ -48,17 +48,20 @@ Then(
     const dotsAfter = await this.trailDotCount();
     const added = dotsAfter - dotsBefore;
 
-    // Count actual entry circles (r="5") and all circles for debugging
-    const allCircles = await this.page.locator("svg circle").count();
-    const r5Circles = await this.page.locator('svg circle[r="5"]').count();
-    const r6Circles = await this.page.locator('svg circle[r="6"]').count();
-    const r8Circles = await this.page.locator('svg circle[r="8"]').count();
-    const r12Circles = await this.page.locator('svg circle[r="12"]').count();
+    // Debug: get positions of all r=5 circles
+    const positions = await this.page.evaluate(() => {
+      const circles = document.querySelectorAll('svg circle[r="5"]');
+      return Array.from(circles).map((c) => ({
+        cx: c.getAttribute("cx"),
+        cy: c.getAttribute("cy"),
+        fill: c.getAttribute("fill"),
+      }));
+    });
 
     assert.strictEqual(
       added,
       expected,
-      `Expected ${expected} new dot, got ${added} (before=${dotsBefore}, after=${dotsAfter}, circles: r5=${r5Circles} r6=${r6Circles} r8=${r8Circles} r12=${r12Circles} total=${allCircles})`,
+      `Expected ${expected} new dot, got ${added} (before=${dotsBefore}, after=${dotsAfter}, dots=${JSON.stringify(positions)})`,
     );
   },
 );
