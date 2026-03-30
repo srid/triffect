@@ -16,7 +16,7 @@ function makeEntries(count: number) {
     good: 0.33,
     bad: 0.33,
     naivete: 0.34,
-    note: null,
+
     created_at: new Date(now - i * 60_000).toISOString(),
   }));
 }

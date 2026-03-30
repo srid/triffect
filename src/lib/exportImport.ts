@@ -11,7 +11,6 @@ interface ExportEnvelope {
     good: number;
     bad: number;
     naivete: number;
-    note: string | null;
     created_at: string;
   }[];
 }
@@ -29,12 +28,11 @@ function downloadJson(json: string, filename: string) {
 export async function exportEntries(client: Client): Promise<void> {
   const all = await client.fetch(client.query("entries"));
   const entries = [...all.values()].map(
-    ({ id, good, bad, naivete, note, created_at }) => ({
+    ({ id, good, bad, naivete, created_at }) => ({
       id,
       good,
       bad,
       naivete,
-      note: note ?? null,
       created_at: new Date(created_at).toISOString(),
     }),
   );
@@ -65,7 +63,7 @@ export async function importEntries(
   let imported = 0;
   let skipped = 0;
 
-  for (const { id, good, bad, naivete, note, created_at } of data.entries) {
+  for (const { id, good, bad, naivete, created_at } of data.entries) {
     if (existingIds.has(id)) {
       skipped++;
       continue;
@@ -75,7 +73,6 @@ export async function importEntries(
       good,
       bad,
       naivete,
-      ...(note != null ? { note } : {}),
       created_at: new Date(created_at),
     });
     imported++;

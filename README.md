@@ -46,7 +46,6 @@ The export format is a versioned envelope:
       "good": 0.33,
       "bad": 0.33,
       "naivete": 0.34,
-      "note": null,
       "created_at": "2026-03-30T09:00:00.000Z"
     }
   ]
@@ -63,7 +62,6 @@ Each entry stores a point in the triangle:
 | `good`       | number [0,1]  | Barycentric weight toward Good vertex    |
 | `bad`        | number [0,1]  | Barycentric weight toward Bad vertex     |
 | `naivete`    | number [0,1]  | Barycentric weight toward Naivete vertex |
-| `note`       | string (opt)  | Legacy field, no longer used in UI       |
 | `created_at` | date          | Timestamp of the entry                   |
 
 The three barycentric coordinates always sum to 1. A tap near the Naivete vertex produces high `naivete`, low `good` and `bad`.
