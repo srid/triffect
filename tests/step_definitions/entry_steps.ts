@@ -70,10 +70,27 @@ Then(
     const dots = await this.trailDotCount();
     const logs = ((this as any)._clickLogs as string[]) ?? [];
     const clickLogs = logs.filter((l) => l.includes("[test] canvas click"));
+
+    // Debug: check how many SVGs exist and where the circles are
+    const svgCount = await this.page.locator("svg").count();
+    const positions = await this.page.evaluate(() => {
+      const circles = document.querySelectorAll('circle[r="5"]');
+      return Array.from(circles).map((c) => {
+        const svg = c.closest("svg");
+        const parent = c.parentElement;
+        return {
+          cx: c.getAttribute("cx"),
+          cy: c.getAttribute("cy"),
+          svgId: svg?.id ?? "no-id",
+          parentTag: parent?.tagName,
+        };
+      });
+    });
+
     assert.strictEqual(
       dots,
       expected,
-      `Expected ${expected} trail dot, got ${dots} (click events: ${clickLogs.length}, logs: ${clickLogs.join(" | ")})`,
+      `Expected ${expected} trail dot, got ${dots} (clicks=${clickLogs.length}, svgs=${svgCount}, positions=${JSON.stringify(positions)})`,
     );
   },
 );
